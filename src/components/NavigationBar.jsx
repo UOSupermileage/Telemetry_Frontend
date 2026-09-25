@@ -1,3 +1,5 @@
+import './NavigationBar.css'
+
 const pages = [
   { id: 'dashboard', label: 'Dashboard', icon: '▦' },
   { id: 'runs', label: 'Runs', icon: '↻' },

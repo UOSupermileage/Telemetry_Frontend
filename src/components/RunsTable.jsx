@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import './RunsTable.css'
 
 function RunsTable({ runs = [], onRunClick }) {
   const [sortConfig, setSortConfig] = useState({

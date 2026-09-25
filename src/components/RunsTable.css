@@ -1,0 +1,89 @@
+.runs-table-container {
+  width: 100%;
+}
+
+.runs-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.runs-filters input,
+.runs-filters select {
+  height: 38px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--card-bg);
+  color: var(--heading);
+  font-size: 13px;
+}
+
+.runs-search {
+  flex: 1;
+  min-width: 200px;
+}
+
+.runs-count {
+  margin-bottom: 10px;
+  color: var(--body);
+  font-size: 13px;
+}
+
+.runs-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card-bg);
+}
+
+.runs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.runs-table th {
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--body);
+  background: #f8fafc;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.runs-table th:hover {
+  color: var(--sidebar-active);
+}
+
+.runs-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--heading);
+  white-space: nowrap;
+}
+
+.runs-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.run-row {
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.run-row:hover {
+  background: #f8fafc;
+}
+
+.no-runs {
+  padding: 40px !important;
+  color: var(--body) !important;
+  text-align: center;
+}

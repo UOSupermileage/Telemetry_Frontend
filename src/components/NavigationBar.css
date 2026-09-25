@@ -1,0 +1,140 @@
+.sidebar {
+  width: 248px;
+  min-height: 100svh;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 16px 20px;
+  color: var(--sidebar-text);
+  background: var(--sidebar-bg);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px 38px;
+  color: #f8fafc;
+}
+
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  color: white;
+  background: var(--sidebar-active);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.brand strong,
+.brand span {
+  display: block;
+}
+
+.brand strong {
+  font-size: 16px;
+  letter-spacing: -0.2px;
+}
+
+.brand span {
+  margin-top: 2px;
+  color: var(--sidebar-muted);
+  font-size: 12px;
+}
+
+.navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.navigation-label {
+  padding: 0 12px 10px;
+  color: var(--sidebar-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.navigation-link {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 11px 12px;
+  border-radius: 7px;
+  color: var(--sidebar-text);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.navigation-link:hover {
+  color: #f8fafc;
+  background: #1f2937;
+}
+
+.navigation-link.active {
+  color: #ffffff;
+  background: var(--sidebar-active);
+}
+
+.navigation-icon {
+  width: 18px;
+  color: currentColor;
+  font-size: 19px;
+  line-height: 1;
+  text-align: center;
+}
+
+.sidebar-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding: 16px 12px 0;
+  border-top: 1px solid #273244;
+  color: var(--sidebar-muted);
+  font-size: 12px;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgb(34 197 94 / 15%);
+}
+
+@media (max-width: 640px) {
+  .sidebar {
+    width: 68px;
+    padding: 20px 10px;
+  }
+
+  .brand {
+    justify-content: center;
+    padding: 0 0 30px;
+  }
+
+  .brand > div:last-child,
+  .navigation-label,
+  .navigation-link:not(.active)::after,
+  .sidebar-footer {
+    display: none;
+  }
+
+  .navigation-link {
+    justify-content: center;
+    padding: 12px 8px;
+  }
+
+  .navigation-icon {
+    font-size: 21px;
+  }
+}
