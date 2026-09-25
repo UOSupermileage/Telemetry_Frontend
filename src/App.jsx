@@ -1,122 +1,121 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useEffect, useState } from 'react'
 import './App.css'
 
+import NavigationBar from './components/NavigationBar'
+import RunsTable from './components/RunsTable'
+
+const pages = [
+  { id: 'dashboard', label: 'Dashboard', icon: '▦' },
+  { id: 'runs', label: 'Runs', icon: '↻' },
+  { id: 'analysis', label: 'Analysis', icon: '◫' },
+]
+
+const pageContent = {
+  dashboard: {
+    eyebrow: 'Overview',
+    title: 'Dashboard',
+    description: 'Monitor your vehicle telemetry at a glance.',
+  },
+  runs: {
+    eyebrow: 'Telemetry',
+    title: 'Runs',
+    description: 'Review recent vehicle runs and their performance.',
+  },
+  analysis: {
+    eyebrow: 'Insights',
+    title: 'Analysis',
+    description: 'Compare telemetry data and identify trends.',
+  },
+}
+
+function getPageFromHash() {
+  const page = window.location.hash.slice(1)
+  return pages.some(({ id }) => id === page) ? page : 'dashboard'
+}
+
+const testRuns = [
+  {
+    run_id: 1,
+    car_id: 2,
+    location_id: 1,
+    driver_id: 3,
+    started_at: '2026-09-20T14:00:00',
+    ended_at: '2026-09-20T14:15:00',
+    notes: 'First test run',
+    date_created: '2026-09-20T15:00:00',
+  },
+  {
+    run_id: 2,
+    car_id: 1,
+    location_id: 2,
+    driver_id: 4,
+    started_at: '2026-09-21T10:30:00',
+    ended_at: '2026-09-21T10:48:00',
+    notes: 'Testing new setup',
+    date_created: '2026-09-21T11:00:00',
+  },
+  {
+    run_id: 3,
+    car_id: 2,
+    location_id: 1,
+    driver_id: 3,
+    started_at: '2026-09-22T13:00:00',
+    ended_at: '2026-09-22T13:22:00',
+    notes: '',
+    date_created: '2026-09-22T14:00:00',
+  },
+]
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [activePage, setActivePage] = useState(getPageFromHash)
+  const content = pageContent[activePage]
+
+  useEffect(() => {
+    const handleHashChange = () => setActivePage(getPageFromHash())
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="app-shell">
 
-      <div className="ticks"></div>
+      <main className="main-content">
+        <header className="topbar">
+          <span className="breadcrumb">Workspace / {content.title}</span>
+          <div className="user-avatar" aria-label="User profile">CR</div>
+        </header>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        <section className="page-content">
+          <p className="eyebrow">{content.eyebrow}</p>
+          <h1>{content.title}</h1>
+          <p className="page-description">{content.description}</p>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+          {activePage === 'runs' ? (
+            <RunsTable
+              runs={testRuns}
+              onRunClick={(run) => {
+                console.log('Selected run:', run)
+              }}
+            />
+          ) : (
+            <div className="content-placeholder">
+              <span className="placeholder-icon" aria-hidden="true">
+                {pages.find(({ id }) => id === activePage).icon}
+              </span>
+
+              <h2>{content.title} content</h2>
+
+              <p>
+              This area is ready for your {content.title.toLowerCase()} data and visualizations.
+              </p>
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
   )
 }
+
+
 
 export default App
