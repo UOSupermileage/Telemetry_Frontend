@@ -1,13 +1,17 @@
 :root {
-  --sidebar-bg: #111827;
-  --sidebar-text: #9ca3af;
-  --sidebar-muted: #6b7280;
-  --sidebar-active: #2563eb;
-  --content-bg: #f8fafc;
+  --sidebar-bg: #231f20;
+  --sidebar-text: #d1d0d0;
+  --sidebar-muted: #969496;
+  --sidebar-active: #f47700;
+  --accent-hover: #d96500;
+  --accent-soft: #fff1e5;
+  --accent-ring: rgb(244 119 0 / 20%);
+  --content-bg: #f7f6f5;
   --card-bg: #ffffff;
-  --heading: #111827;
-  --body: #64748b;
-  --border: #e2e8f0;
+  --heading: #231f20;
+  --body: #666366;
+  --border: #e4e1df;
+  --surface-muted: #f5f3f2;
 }
 
 .app-shell {
@@ -43,8 +47,8 @@
   height: 32px;
   place-items: center;
   border-radius: 50%;
-  color: #1d4ed8;
-  background: #dbeafe;
+  color: #a94f00;
+  background: #ffead6;
   font-size: 11px;
   font-weight: 700;
 }
@@ -77,6 +81,45 @@ h1 {
   font-size: 15px;
 }
 
+.runs-heading-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: -18px 0 16px;
+}
+
+.add-run-button {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 15px;
+  border: 1px solid var(--accent-hover);
+  border-radius: 7px;
+  background: var(--sidebar-active);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.add-run-button:hover {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
+}
+
+.add-run-button:focus-visible {
+  outline: 3px solid var(--accent-ring);
+  outline-offset: 2px;
+}
+
+.add-run-button span {
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1;
+}
+
 .content-placeholder {
   min-height: 250px;
   display: flex;
@@ -97,7 +140,7 @@ h1 {
   place-items: center;
   border-radius: 10px;
   color: var(--sidebar-active);
-  background: #eff6ff;
+  background: var(--accent-soft);
   font-size: 23px;
 }
 
