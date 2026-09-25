@@ -1,4 +1,5 @@
 import './NavigationBar.css'
+import uosmLogo from '../assets/UOSMLogo.jpg'
 
 const pages = [
   { id: 'dashboard', label: 'Dashboard', icon: '▦' },
@@ -10,9 +11,7 @@ function NavigationBar({ activePage }) {
   return (
     <aside className="sidebar" aria-label="Primary navigation">
       <div className="brand">
-        <div className="brand-mark" aria-hidden="true">
-          U
-        </div>
+        <img className="brand-mark" src={uosmLogo} alt="" />
 
         <div>
           <strong>Telemetry</strong>

@@ -3,6 +3,7 @@ import './App.css'
 
 import NavigationBar from './components/NavigationBar'
 import RunsTable from './components/RunsTable'
+import ImportPopup from './components/ImportPopup'
 
 const pages = [
   { id: 'dashboard', label: 'Dashboard', icon: '▦' },
@@ -68,6 +69,7 @@ const testRuns = [
 
 function App() {
   const [activePage, setActivePage] = useState(getPageFromHash)
+  const [isImportOpen, setIsImportOpen] = useState(false)
   const content = pageContent[activePage]
 
   useEffect(() => {
@@ -105,12 +107,27 @@ function App() {
           </p>
 
           {activePage === 'runs' ? (
-            <RunsTable
-              runs={testRuns}
-              onRunClick={(run) => {
-                console.log('Selected run:', run)
-              }}
-            />
+            <>
+              <div className="runs-heading-actions">
+                <button
+                  type="button"
+                  className="add-run-button"
+                  onClick={() => setIsImportOpen(true)}
+                >
+                  <span aria-hidden="true">+</span>
+                  Add run
+                </button>
+              </div>
+              <RunsTable
+                runs={testRuns}
+                onRunClick={(run) => {
+                  console.log('Selected run:', run)
+                }}
+              />
+              {isImportOpen && (
+                <ImportPopup onClose={() => setIsImportOpen(false)} />
+              )}
+            </>
           ) : (
             <div className="content-placeholder">
               <span className="placeholder-icon" aria-hidden="true">
