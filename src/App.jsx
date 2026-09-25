@@ -72,23 +72,37 @@ function App() {
 
   useEffect(() => {
     const handleHashChange = () => setActivePage(getPageFromHash())
+
     window.addEventListener('hashchange', handleHashChange)
-    return () => window.removeEventListener('hashchange', handleHashChange)
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange)
+    }
   }, [])
 
   return (
     <div className="app-shell">
+      <NavigationBar activePage={activePage} />
 
       <main className="main-content">
         <header className="topbar">
-          <span className="breadcrumb">Workspace / {content.title}</span>
-          <div className="user-avatar" aria-label="User profile">CR</div>
+          <span className="breadcrumb">
+            Workspace / {content.title}
+          </span>
+
+          <div className="user-avatar" aria-label="User profile">
+            CR
+          </div>
         </header>
 
         <section className="page-content">
           <p className="eyebrow">{content.eyebrow}</p>
+
           <h1>{content.title}</h1>
-          <p className="page-description">{content.description}</p>
+
+          <p className="page-description">
+            {content.description}
+          </p>
 
           {activePage === 'runs' ? (
             <RunsTable
@@ -106,7 +120,8 @@ function App() {
               <h2>{content.title} content</h2>
 
               <p>
-              This area is ready for your {content.title.toLowerCase()} data and visualizations.
+                This area is ready for your{' '}
+                {content.title.toLowerCase()} data and visualizations.
               </p>
             </div>
           )}
@@ -115,7 +130,5 @@ function App() {
     </div>
   )
 }
-
-
 
 export default App
