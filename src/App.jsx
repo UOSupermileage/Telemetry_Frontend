@@ -4,6 +4,7 @@ import './App.css'
 import NavigationBar from './components/NavigationBar'
 import RunsTable from './components/RunsTable'
 import ImportPopup from './components/ImportPopup'
+import TelemetryChart from './components/TelemetryChart'
 
 const pages = [
   { id: 'dashboard', label: 'Dashboard', icon: '▦' },
@@ -128,6 +129,8 @@ function App() {
                 <ImportPopup onClose={() => setIsImportOpen(false)} />
               )}
             </>
+          ) : activePage === 'analysis' ? (
+            <TelemetryChart />
           ) : (
             <div className="content-placeholder">
               <span className="placeholder-icon" aria-hidden="true">
