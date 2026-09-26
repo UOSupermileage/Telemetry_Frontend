@@ -2,7 +2,6 @@ import './TelemetryTabs.css'
 
 const metrics = [
   { id: 'speed', label: 'Speed' },
-  { id: 'acceleration', label: 'Acceleration' },
   { id: 'throttle', label: 'Throttle' },
   { id: 'current', label: 'Current' },
   { id: 'voltage', label: 'Voltage' },
