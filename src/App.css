@@ -167,20 +167,6 @@ h1 {
 }
 
 .dashboard-layout {
-  display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
-  gap: 24px;
-  align-items: stretch;
-}
-
-.dashboard-sidebar-panel {
+  width: 100%;
   min-width: 0;
-}
-
-.dashboard-graph-area {
-  min-width: 0;
-  min-height: 600px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--card-bg);
 }

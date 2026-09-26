@@ -1,7 +1,7 @@
 import TelemetryTabs from './TelemetryTabs'
 import './DashboardSidebar.css'
 
-function DashboardSidebar() {
+function DashboardSidebar({ activeMetric, onMetricChange }) {
   return (
     <aside className="dashboard-sidebar">
 
@@ -14,7 +14,7 @@ function DashboardSidebar() {
       <section className="telemetry-section">
         <h2>Telemetry</h2>
 
-        <TelemetryTabs />
+        <TelemetryTabs activeMetric={activeMetric} onMetricChange={onMetricChange} />
       </section>
 
     </aside>

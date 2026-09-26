@@ -1,0 +1,26 @@
+.telemetry-chart-holder {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.telemetry-chart-card {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card-bg);
+}
+
+.telemetry-chart-card h2 {
+  margin: 0 0 8px;
+  color: var(--heading);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .telemetry-chart-holder {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

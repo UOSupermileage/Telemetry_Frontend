@@ -1,0 +1,35 @@
+.telemetry-chart-container {
+  position: relative;
+  min-width: 0;
+}
+
+.telemetry-chart {
+  width: 100%;
+  min-width: 0;
+}
+
+.telemetry-chart-tooltip {
+  position: absolute;
+  z-index: 1;
+  max-width: calc(100% - 16px);
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--heading);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.35;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.telemetry-chart .uplot {
+  font-family: inherit;
+}
+
+.telemetry-chart-empty {
+  display: grid;
+  place-items: center;
+  color: var(--body);
+  font-size: 13px;
+}
