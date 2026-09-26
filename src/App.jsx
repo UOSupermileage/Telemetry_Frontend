@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import './App.css'
 
 import NavigationBar from './components/NavigationBar'
+import DashboardSidebar from './components/DashboardSidebar'
 import RunsTable from './components/RunsTable'
 import ImportPopup from './components/ImportPopup'
 
@@ -70,10 +71,13 @@ const testRuns = [
 function App() {
   const [activePage, setActivePage] = useState(getPageFromHash)
   const [isImportOpen, setIsImportOpen] = useState(false)
+
   const content = pageContent[activePage]
 
   useEffect(() => {
-    const handleHashChange = () => setActivePage(getPageFromHash())
+    const handleHashChange = () => {
+      setActivePage(getPageFromHash())
+    }
 
     window.addEventListener('hashchange', handleHashChange)
 
@@ -84,9 +88,12 @@ function App() {
 
   return (
     <div className="app-shell">
+
+      {/* Main navigation sidebar */}
       <NavigationBar activePage={activePage} />
 
       <main className="main-content">
+
         <header className="topbar">
           <span className="breadcrumb">
             Workspace / {content.title}
@@ -98,6 +105,7 @@ function App() {
         </header>
 
         <section className="page-content">
+
           <p className="eyebrow">{content.eyebrow}</p>
 
           <h1>{content.title}</h1>
@@ -106,7 +114,28 @@ function App() {
             {content.description}
           </p>
 
-          {activePage === 'runs' ? (
+          {activePage === 'dashboard' ? (
+
+            <div className="dashboard-layout">
+
+              {/* Dashboard-specific sidebar */}
+              <aside className="dashboard-sidebar-panel">
+
+                <DashboardSidebar />
+
+              </aside>
+
+              {/* Main graph area */}
+              <div className="dashboard-graph-area">
+
+                {/* Graph will go here */}
+
+              </div>
+
+            </div>
+
+          ) : activePage === 'runs' ? (
+
             <>
               <div className="runs-heading-actions">
                 <button
@@ -118,18 +147,25 @@ function App() {
                   Add run
                 </button>
               </div>
+
               <RunsTable
                 runs={testRuns}
                 onRunClick={(run) => {
                   console.log('Selected run:', run)
                 }}
               />
+
               {isImportOpen && (
-                <ImportPopup onClose={() => setIsImportOpen(false)} />
+                <ImportPopup
+                  onClose={() => setIsImportOpen(false)}
+                />
               )}
             </>
+
           ) : (
+
             <div className="content-placeholder">
+
               <span className="placeholder-icon" aria-hidden="true">
                 {pages.find(({ id }) => id === activePage).icon}
               </span>
@@ -140,8 +176,10 @@ function App() {
                 This area is ready for your{' '}
                 {content.title.toLowerCase()} data and visualizations.
               </p>
+
             </div>
           )}
+
         </section>
       </main>
     </div>

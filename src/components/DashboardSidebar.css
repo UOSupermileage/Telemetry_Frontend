@@ -1,0 +1,22 @@
+.dashboard-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  height: 100%;
+}
+
+.filter-section,
+.telemetry-section {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card-bg);
+}
+
+.filter-section h2,
+.telemetry-section h2 {
+  margin: 0 0 16px;
+  color: var(--heading);
+  font-size: 15px;
+  font-weight: 600;
+}
