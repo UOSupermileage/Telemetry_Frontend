@@ -1,11 +1,6 @@
 import './NavigationBar.css'
 import uosmLogo from '../assets/UOSMLogo.jpg'
-
-const pages = [
-  { id: 'dashboard', label: 'Dashboard', icon: '▦' },
-  { id: 'runs', label: 'Runs', icon: '↻' },
-  { id: 'analysis', label: 'Analysis', icon: '◫' },
-]
+import { navigationPages } from '../data/mockData'
 
 function NavigationBar({ activePage }) {
   return (
@@ -22,7 +17,7 @@ function NavigationBar({ activePage }) {
       <nav className="navigation">
         <span className="navigation-label">Workspace</span>
 
-        {pages.map((page) => (
+        {navigationPages.map((page) => (
           <a
             key={page.id}
             className={
@@ -31,20 +26,21 @@ function NavigationBar({ activePage }) {
                 : 'navigation-link'
             }
             href={`#${page.id}`}
+            title={page.label}
             aria-current={activePage === page.id ? 'page' : undefined}
           >
             <span className="navigation-icon" aria-hidden="true">
               {page.icon}
             </span>
 
-            {page.label}
+            <span className="navigation-text">{page.label}</span>
           </a>
         ))}
       </nav>
 
       <div className="sidebar-footer">
         <span className="status-dot" aria-hidden="true" />
-        System online
+        Demo mode
       </div>
     </aside>
   )

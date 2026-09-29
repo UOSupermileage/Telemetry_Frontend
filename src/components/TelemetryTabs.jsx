@@ -1,13 +1,8 @@
 import './TelemetryTabs.css'
 
-const telemetryOptions = [
-  'Speed',
-  'Throttle',
-  'Current',
-  'Voltage',
-]
+const telemetryOptions = ['Speed', 'Throttle', 'Current', 'Voltage']
 
-function TelemetryTabs({ hiddenMetrics = [], onMetricToggle = () => {} }) {
+function TelemetryTabs({ visibleMetrics = [], onMetricToggle = () => {} }) {
   return (
     <div className="telemetry-tabs">
       {telemetryOptions.map((option) => (
@@ -15,9 +10,9 @@ function TelemetryTabs({ hiddenMetrics = [], onMetricToggle = () => {} }) {
           key={option}
           type="button"
           className={`telemetry-tab ${
-            hiddenMetrics.includes(option.toLowerCase()) ? 'selected' : ''
+            visibleMetrics.includes(option.toLowerCase()) ? 'selected' : ''
           }`}
-          aria-pressed={hiddenMetrics.includes(option.toLowerCase())}
+          aria-pressed={visibleMetrics.includes(option.toLowerCase())}
           onClick={() => onMetricToggle(option.toLowerCase())}
         >
           {option}

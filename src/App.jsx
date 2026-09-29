@@ -4,12 +4,7 @@ import './App.css'
 import NavigationBar from './components/NavigationBar'
 import DashboardPage from './pages/DashboardPage'
 import RunsPage from './pages/RunsPage'
-
-const pages = [
-  { id: 'dashboard', label: 'Dashboard', icon: '▦' },
-  { id: 'runs', label: 'Runs', icon: '↻' },
-  { id: 'analysis', label: 'Analysis', icon: '◫' },
-]
+import { mockRuns, navigationPages } from './data/mockData'
 
 const pageContent = {
   dashboard: {
@@ -31,11 +26,20 @@ const pageContent = {
 
 function getPageFromHash() {
   const page = window.location.hash.slice(1)
-  return pages.some(({ id }) => id === page) ? page : 'dashboard'
+  return navigationPages.some(({ id }) => id === page) ? page : 'dashboard'
 }
 
 function App() {
   const [activePage, setActivePage] = useState(getPageFromHash)
+  const [runs, setRuns] = useState(mockRuns)
+
+  const addRun = (run) => {
+    setRuns((current) => [{
+      ...run,
+      run_id: Math.max(0, ...current.map(({ run_id }) => Number(run_id) || 0)) + 1,
+      date_created: new Date().toISOString(),
+    }, ...current])
+  }
 
   const content = pageContent[activePage]
 
@@ -64,7 +68,7 @@ function App() {
             Workspace / {content.title}
           </span>
 
-          <div className="user-avatar" aria-label="User profile">
+          <div className="user-avatar" role="img" aria-label="User profile: CR">
             CR
           </div>
         </header>
@@ -79,12 +83,12 @@ function App() {
             {content.description}
           </p>
 
-          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage /> : (
+          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage runs={runs} onRunImport={addRun} /> : (
 
             <div className="content-placeholder">
 
               <span className="placeholder-icon" aria-hidden="true">
-                {pages.find(({ id }) => id === activePage).icon}
+                {navigationPages.find(({ id }) => id === activePage).icon}
               </span>
 
               <h2>{content.title} content</h2>
