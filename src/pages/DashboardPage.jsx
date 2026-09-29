@@ -1,4 +1,5 @@
 import TelemetryChartHolder from '../components/TelemetryChartHolder'
+import DashboardSidebar from '../components/DashboardSidebar'
 
 const telemetry = [
   { tick: 0, throttle: 12, speed: 0, current: 4.2, voltage: 48.1 },
@@ -19,16 +20,52 @@ const telemetry = [
 ]
 
 const charts = [
-  { id: 'speed', title: 'Speed', data: telemetry, yKey: 'speed', unit: 'km/h', color: '#6657a5' },
-  { id: 'throttle', title: 'Throttle', data: telemetry, yKey: 'throttle', unit: '%', color: '#f47700' },
-  { id: 'current', title: 'Current', data: telemetry, yKey: 'current', unit: 'A', color: '#168a78' },
-  { id: 'voltage', title: 'Voltage', data: telemetry, yKey: 'voltage', unit: 'V', color: '#3275a8' },
+  {
+    id: 'speed',
+    title: 'Speed',
+    data: telemetry,
+    yKey: 'speed',
+    unit: 'km/h',
+    color: '#6657a5',
+  },
+  {
+    id: 'throttle',
+    title: 'Throttle',
+    data: telemetry,
+    yKey: 'throttle',
+    unit: '%',
+    color: '#f47700',
+  },
+  {
+    id: 'current',
+    title: 'Current',
+    data: telemetry,
+    yKey: 'current',
+    unit: 'A',
+    color: '#168a78',
+  },
+  {
+    id: 'voltage',
+    title: 'Voltage',
+    data: telemetry,
+    yKey: 'voltage',
+    unit: 'V',
+    color: '#3275a8',
+  },
 ]
 
 function DashboardPage() {
   return (
     <div className="dashboard-layout">
-      <TelemetryChartHolder charts={charts} />
+
+      <aside className="dashboard-sidebar-panel">
+        <DashboardSidebar />
+      </aside>
+
+      <div className="dashboard-graph-area">
+        <TelemetryChartHolder charts={charts} />
+      </div>
+
     </div>
   )
 }

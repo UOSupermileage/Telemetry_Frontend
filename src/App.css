@@ -54,7 +54,7 @@
 }
 
 .page-content {
-  max-width: 960px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 52px 42px;
 }
@@ -167,6 +167,18 @@ h1 {
 }
 
 .dashboard-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 24px;
   width: 100%;
+  min-width: 0;
+  align-items: start;
+}
+
+.dashboard-sidebar-panel {
+  min-width: 0;
+}
+
+.dashboard-graph-area {
   min-width: 0;
 }
