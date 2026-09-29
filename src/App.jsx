@@ -84,7 +84,7 @@ function App() {
             {content.description}
           </p>
 
-          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage runs={runs} onRunImport={addRun} /> : activePage === 'analysis' ? <AnalysisPage /> : (
+          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage runs={runs} onRunImport={addRun} /> : activePage === 'analysis' ? <AnalysisPage runs={runs} /> : (
 
             <div className="content-placeholder">
 
