@@ -3,6 +3,7 @@ import './App.css'
 
 import NavigationBar from './components/NavigationBar'
 import DashboardPage from './pages/DashboardPage'
+import AnalysisPage from './pages/AnalysisPage'
 import RunsPage from './pages/RunsPage'
 import { mockRuns, navigationPages } from './data/mockData'
 
@@ -83,7 +84,7 @@ function App() {
             {content.description}
           </p>
 
-          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage runs={runs} onRunImport={addRun} /> : (
+          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage runs={runs} onRunImport={addRun} /> : activePage === 'analysis' ? <AnalysisPage /> : (
 
             <div className="content-placeholder">
 
