@@ -19,3 +19,12 @@
   font-weight: 600;
 }
 
+.telemetry-empty {
+  margin: 0;
+  padding: 32px 20px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--body);
+  text-align: center;
+}
+

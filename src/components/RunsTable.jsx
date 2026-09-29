@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
+import { mockCars, mockDrivers, mockLocations } from '../data/mockData'
 import './RunsTable.css'
 
-function RunsTable({ runs = [], onRunClick }) {
+function RunsTable({ runs = [] }) {
   const [sortConfig, setSortConfig] = useState({
     key: 'started_at',
     direction: 'desc',
@@ -13,9 +14,12 @@ function RunsTable({ runs = [], onRunClick }) {
   const [locationFilter, setLocationFilter] = useState('')
 
   // Get unique IDs for the filter dropdowns
-  const carIds = [...new Set(runs.map((run) => run.car_id))]
-  const driverIds = [...new Set(runs.map((run) => run.driver_id))]
-  const locationIds = [...new Set(runs.map((run) => run.location_id))]
+  const carIds = [...new Set(runs.map((run) => run.car_id).filter((id) => id != null))]
+  const driverIds = [...new Set(runs.map((run) => run.driver_id).filter((id) => id != null))]
+  const locationIds = [...new Set(runs.map((run) => run.location_id).filter((id) => id != null))]
+  const carName = (id) => mockCars.find((item) => item.id === Number(id))?.name ?? `Car ${id}`
+  const driverName = (id) => mockDrivers.find((item) => item.id === Number(id))?.name ?? `Driver ${id}`
+  const locationName = (id) => mockLocations.find((item) => item.id === Number(id))?.name ?? `Location ${id}`
 
   // Filter runs
   const filteredRuns = useMemo(() => {
@@ -24,21 +28,23 @@ function RunsTable({ runs = [], onRunClick }) {
 
       const matchesSearch =
         !search ||
-        run.run_id.toString().includes(searchText) ||
-        run.car_id.toString().includes(searchText) ||
-        run.driver_id.toString().includes(searchText) ||
-        run.location_id.toString().includes(searchText) ||
-        run.notes?.toLowerCase().includes(searchText)
+        String(run.run_id ?? '').toLowerCase().includes(searchText) ||
+        String(run.car_id ?? '').toLowerCase().includes(searchText) ||
+        String(run.driver_id ?? '').toLowerCase().includes(searchText) ||
+        String(run.location_id ?? '').toLowerCase().includes(searchText) ||
+        [carName(run.car_id), driverName(run.driver_id), locationName(run.location_id)]
+          .some((value) => value.toLowerCase().includes(searchText)) ||
+        String(run.notes ?? '').toLowerCase().includes(searchText)
 
       const matchesCar =
-        !carFilter || run.car_id.toString() === carFilter
+        !carFilter || String(run.car_id ?? '') === carFilter
 
       const matchesDriver =
-        !driverFilter || run.driver_id.toString() === driverFilter
+        !driverFilter || String(run.driver_id ?? '') === driverFilter
 
       const matchesLocation =
         !locationFilter ||
-        run.location_id.toString() === locationFilter
+        String(run.location_id ?? '') === locationFilter
 
       return (
         matchesSearch &&
@@ -86,13 +92,22 @@ function RunsTable({ runs = [], onRunClick }) {
 
   const getSortArrow = (key) => {
     if (sortConfig.key !== key) return ''
-    return sortConfig.direction === 'asc' ? ' ↑' : ' ↓'
+    return sortConfig.direction === 'asc' ? ' (ascending)' : ' (descending)'
   }
 
   const formatDate = (date) => {
     if (!date) return '-'
-    return new Date(date).toLocaleString()
+    const parsed = new Date(date)
+    return Number.isNaN(parsed.getTime()) ? '-' : parsed.toLocaleString()
   }
+
+  const renderSortHeader = (label, key) => (
+    <th key={key} scope="col" aria-sort={sortConfig.key === key ? (sortConfig.direction === 'asc' ? 'ascending' : 'descending') : 'none'}>
+      <button type="button" onClick={() => handleSort(key)}>
+        {label}{getSortArrow(key)}
+      </button>
+    </th>
+  )
 
   return (
     <div className="runs-table-container">
@@ -100,7 +115,9 @@ function RunsTable({ runs = [], onRunClick }) {
       {/* Filters */}
       <div className="runs-filters">
 
+        <label className="visually-hidden" htmlFor="runs-search">Search runs</label>
         <input
+          id="runs-search"
           type="text"
           placeholder="Search runs..."
           value={search}
@@ -109,6 +126,7 @@ function RunsTable({ runs = [], onRunClick }) {
         />
 
         <select
+          aria-label="Filter by car"
           value={carFilter}
           onChange={(e) => setCarFilter(e.target.value)}
         >
@@ -116,12 +134,13 @@ function RunsTable({ runs = [], onRunClick }) {
 
           {carIds.map((id) => (
             <option key={id} value={id}>
-              Car {id}
+              {carName(id)}
             </option>
           ))}
         </select>
 
         <select
+          aria-label="Filter by driver"
           value={driverFilter}
           onChange={(e) => setDriverFilter(e.target.value)}
         >
@@ -129,12 +148,13 @@ function RunsTable({ runs = [], onRunClick }) {
 
           {driverIds.map((id) => (
             <option key={id} value={id}>
-              Driver {id}
+              {driverName(id)}
             </option>
           ))}
         </select>
 
         <select
+          aria-label="Filter by location"
           value={locationFilter}
           onChange={(e) => setLocationFilter(e.target.value)}
         >
@@ -142,7 +162,7 @@ function RunsTable({ runs = [], onRunClick }) {
 
           {locationIds.map((id) => (
             <option key={id} value={id}>
-              Location {id}
+              {locationName(id)}
             </option>
           ))}
         </select>
@@ -159,35 +179,14 @@ function RunsTable({ runs = [], onRunClick }) {
 
           <thead>
             <tr>
-              <th onClick={() => handleSort('run_id')}>
-                Run ID{getSortArrow('run_id')}
-              </th>
-
-              <th onClick={() => handleSort('started_at')}>
-                Started{getSortArrow('started_at')}
-              </th>
-
-              <th onClick={() => handleSort('ended_at')}>
-                Ended{getSortArrow('ended_at')}
-              </th>
-
-              <th onClick={() => handleSort('car_id')}>
-                Car{getSortArrow('car_id')}
-              </th>
-
-              <th onClick={() => handleSort('driver_id')}>
-                Driver{getSortArrow('driver_id')}
-              </th>
-
-              <th onClick={() => handleSort('location_id')}>
-                Location{getSortArrow('location_id')}
-              </th>
-
-              <th>Notes</th>
-
-              <th onClick={() => handleSort('date_created')}>
-                Created{getSortArrow('date_created')}
-              </th>
+              {renderSortHeader('Run ID', 'run_id')}
+              {renderSortHeader('Started', 'started_at')}
+              {renderSortHeader('Ended', 'ended_at')}
+              {renderSortHeader('Car', 'car_id')}
+              {renderSortHeader('Driver', 'driver_id')}
+              {renderSortHeader('Location', 'location_id')}
+              <th scope="col">Notes</th>
+              {renderSortHeader('Created', 'date_created')}
             </tr>
           </thead>
 
@@ -200,17 +199,13 @@ function RunsTable({ runs = [], onRunClick }) {
               </tr>
             ) : (
               sortedRuns.map((run) => (
-                <tr
-                  key={run.run_id}
-                  onClick={() => onRunClick?.(run)}
-                  className="run-row"
-                >
-                  <td>{run.run_id}</td>
+                <tr key={run.run_id}>
+                  <td>{run.run_id ?? '-'}</td>
                   <td>{formatDate(run.started_at)}</td>
                   <td>{formatDate(run.ended_at)}</td>
-                  <td>Car {run.car_id}</td>
-                  <td>Driver {run.driver_id}</td>
-                  <td>Location {run.location_id}</td>
+                  <td>{run.car_id == null ? '-' : carName(run.car_id)}</td>
+                  <td>{run.driver_id == null ? '-' : driverName(run.driver_id)}</td>
+                  <td>{run.location_id == null ? '-' : locationName(run.location_id)}</td>
                   <td>{run.notes || '-'}</td>
                   <td>{formatDate(run.date_created)}</td>
                 </tr>

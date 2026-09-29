@@ -45,7 +45,7 @@ function TelemetryChart({
         ? value.toLocaleString(undefined, { maximumFractionDigits: 2 })
         : value
 
-      tooltip.textContent = `${xKey}: ${formatValue(xValue)} · ${yKey}: ${formatValue(yValue)}${unit ? ` ${unit}` : ''}`
+      tooltip.textContent = `${xKey}: ${formatValue(xValue)} | ${yKey}: ${formatValue(yValue)}${unit ? ` ${unit}` : ''}`
       tooltip.hidden = false
 
       const containerRect = containerElement.current.getBoundingClientRect()

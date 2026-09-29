@@ -5,7 +5,6 @@
   height: 100%;
 }
 
-.filter-section,
 .telemetry-section {
   padding: 20px;
   border: 1px solid var(--border);
@@ -13,7 +12,6 @@
   background: var(--card-bg);
 }
 
-.filter-section h2,
 .telemetry-section h2 {
   margin: 0 0 16px;
   color: var(--heading);

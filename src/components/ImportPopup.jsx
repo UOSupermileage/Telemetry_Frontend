@@ -1,19 +1,43 @@
-import {useState} from "react";
-import "./ImportPopup.css";
+import { useEffect, useRef, useState } from 'react'
+import { mockCars, mockDrivers, mockLocations } from '../data/mockData'
+import './ImportPopup.css'
 
-export default function ImportPopup({onClose}) {
+export default function ImportPopup({ onClose, onImport }) {
     const [form, setForm] = useState({
         car_id: "", driver_id: "", location_id: "", started_at: "", ended_at: "", notes: "",
     });
 
     const [file, setFile] = useState(null);
 
-    // Temporary mock data for the dropdowns
-    const cars = [{id: 1, name: "Car 1"}, {id: 2, name: "Car 2"}, {id: 3, name: "Car 3"},];
+    const dialogRef = useRef(null)
+    const fileInputRef = useRef(null)
+    const openerRef = useRef(document.activeElement)
+    const [error, setError] = useState('')
 
-    const drivers = [{id: 1, name: "John Smith"}, {id: 2, name: "Jane Doe"}, {id: 3, name: "Alex Johnson"},];
-
-    const locations = [{id: 1, name: "Test Track"}, {id: 2, name: "Ottawa Circuit"}, {id: 3, name: "Main Campus"},];
+    useEffect(() => {
+        const dialog = dialogRef.current
+        dialog?.querySelector('select, input, textarea, button')?.focus()
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') onClose()
+            if (event.key !== 'Tab' || !dialog) return
+            const controls = [...dialog.querySelectorAll('button, input, select, textarea')]
+                .filter((control) => !control.disabled)
+            const first = controls[0]
+            const last = controls[controls.length - 1]
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault()
+                last?.focus()
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault()
+                first?.focus()
+            }
+        }
+        document.addEventListener('keydown', handleKeyDown)
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown)
+            openerRef.current?.focus?.()
+        }
+    }, [onClose])
 
     function handleChange(e) {
         const {name, value} = e.target;
@@ -26,15 +50,19 @@ export default function ImportPopup({onClose}) {
     function handleSubmit(e) {
         e.preventDefault();
 
-        // Visual-only for now.
-        console.log("Form:", form);
-        console.log("File:", file);
-
-        onClose();
+        if (form.ended_at && new Date(form.ended_at) < new Date(form.started_at)) {
+            setError('End time must be after the start time.')
+            return
+        }
+        setError('')
+        const run = { ...form, car_id: Number(form.car_id), driver_id: Number(form.driver_id), location_id: Number(form.location_id) }
+        if (onImport) onImport(run)
+        else onClose()
     }
 
     return (<div className="import-overlay" onClick={onClose}>
             <div
+                ref={dialogRef}
                 className="import-modal"
                 role="dialog"
                 aria-modal="true"
@@ -46,7 +74,7 @@ export default function ImportPopup({onClose}) {
                     <div>
                         <h2 id="import-title">Import telemetry</h2>
                         <p>
-                            Upload a telemetry CSV and provide the run details.
+                            Demo mode: this adds a run in memory for this app session. The CSV is not stored or parsed.
                         </p>
                     </div>
 
@@ -56,7 +84,7 @@ export default function ImportPopup({onClose}) {
                         onClick={onClose}
                         aria-label="Close"
                     >
-                        ×
+                        x
                     </button>
                 </div>
 
@@ -79,7 +107,7 @@ export default function ImportPopup({onClose}) {
                                 >
                                     <option value="">Select a car</option>
 
-                                    {cars.map((car) => (<option key={car.id} value={car.id}>
+                                    {mockCars.map((car) => (<option key={car.id} value={car.id}>
                                             {car.name}
                                         </option>))}
                                 </select>
@@ -98,7 +126,7 @@ export default function ImportPopup({onClose}) {
                                 >
                                     <option value="">Select a driver</option>
 
-                                    {drivers.map((driver) => (<option
+                                    {mockDrivers.map((driver) => (<option
                                             key={driver.id}
                                             value={driver.id}
                                         >
@@ -120,7 +148,7 @@ export default function ImportPopup({onClose}) {
                                 >
                                     <option value="">Select a location</option>
 
-                                    {locations.map((location) => (<option
+                                    {mockLocations.map((location) => (<option
                                             key={location.id}
                                             value={location.id}
                                         >
@@ -188,7 +216,7 @@ export default function ImportPopup({onClose}) {
                             className="file-drop"
                             htmlFor="telemetry-file"
                         >
-                            <span className="upload-icon">↑</span>
+                            <span className="upload-icon">Upload</span>
 
                             <strong>
                                 {file ? file.name : "Choose a CSV file"}
@@ -199,9 +227,11 @@ export default function ImportPopup({onClose}) {
               </span>
 
                             <input
+                                ref={fileInputRef}
                                 id="telemetry-file"
                                 type="file"
                                 accept=".csv,text/csv"
+                                required
                                 onChange={(e) => {
                                     setFile(e.target.files?.[0] ?? null);
                                 }}
@@ -211,13 +241,17 @@ export default function ImportPopup({onClose}) {
                         {file && (<button
                                 type="button"
                                 className="remove-file"
-                                onClick={() => setFile(null)}
+                                onClick={() => {
+                                    setFile(null)
+                                    if (fileInputRef.current) fileInputRef.current.value = ''
+                                }}
                             >
                                 Remove file
                             </button>)}
                     </section>
 
                     {/* Footer */}
+                    {error && <p className="form-error" role="alert">{error}</p>}
                     <div className="modal-footer">
                         <button
                             type="button"
