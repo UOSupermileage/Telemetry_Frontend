@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import TelemetryChartHolder from '../components/TelemetryChartHolder'
 import DashboardSidebar from '../components/DashboardSidebar'
 
@@ -55,15 +56,25 @@ const charts = [
 ]
 
 function DashboardPage() {
+  const [hiddenMetrics, setHiddenMetrics] = useState([])
+
+  const toggleMetric = (metric) => {
+    setHiddenMetrics((current) =>
+      current.includes(metric)
+        ? current.filter((item) => item !== metric)
+        : [...current, metric],
+    )
+  }
+
   return (
     <div className="dashboard-layout">
 
       <aside className="dashboard-sidebar-panel">
-        <DashboardSidebar />
+        <DashboardSidebar hiddenMetrics={hiddenMetrics} onMetricToggle={toggleMetric} />
       </aside>
 
       <div className="dashboard-graph-area">
-        <TelemetryChartHolder charts={charts} />
+        <TelemetryChartHolder charts={charts.filter((chart) => !hiddenMetrics.includes(chart.id))} />
       </div>
 
     </div>

@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import './TelemetryTabs.css'
 
 const telemetryOptions = [
@@ -8,19 +7,7 @@ const telemetryOptions = [
   'Voltage',
 ]
 
-function TelemetryTabs() {
-  const [selectedTelemetry, setSelectedTelemetry] = useState(['Speed'])
-
-  const toggleTelemetry = (option) => {
-    setSelectedTelemetry((current) => {
-      if (current.includes(option)) {
-        return current.filter((item) => item !== option)
-      }
-
-      return [...current, option]
-    })
-  }
-
+function TelemetryTabs({ hiddenMetrics = [], onMetricToggle = () => {} }) {
   return (
     <div className="telemetry-tabs">
       {telemetryOptions.map((option) => (
@@ -28,9 +15,10 @@ function TelemetryTabs() {
           key={option}
           type="button"
           className={`telemetry-tab ${
-            selectedTelemetry.includes(option) ? 'selected' : ''
+            hiddenMetrics.includes(option.toLowerCase()) ? 'selected' : ''
           }`}
-          onClick={() => toggleTelemetry(option)}
+          aria-pressed={hiddenMetrics.includes(option.toLowerCase())}
+          onClick={() => onMetricToggle(option.toLowerCase())}
         >
           {option}
         </button>
