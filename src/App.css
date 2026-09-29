@@ -177,6 +177,117 @@ h1 {
   font-size: 14px;
 }
 
+.welcome-page {
+  display: grid;
+  gap: 22px;
+}
+
+.welcome-banner {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-height: 220px;
+  padding: 36px 42px;
+  border: 1px solid #f1d6c1;
+  border-radius: 14px;
+  background: linear-gradient(115deg, #fff7f0, #fff 72%);
+}
+
+.welcome-mark {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  flex: 0 0 64px;
+  place-items: center;
+  border-radius: 18px;
+  color: var(--sidebar-active);
+  background: var(--accent-soft);
+  font-size: 34px;
+}
+
+.welcome-kicker {
+  margin: 0 0 6px;
+  color: var(--sidebar-active);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.welcome-banner h2 {
+  margin: 0;
+  color: var(--heading);
+  font-size: clamp(24px, 3vw, 34px);
+  letter-spacing: -0.03em;
+}
+
+.welcome-banner > div > p:last-child {
+  margin: 9px 0 0;
+  font-size: 15px;
+}
+
+.welcome-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.welcome-card {
+  display: flex;
+  min-height: 120px;
+  align-items: center;
+  gap: 16px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card-bg);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 150ms ease, transform 150ms ease;
+}
+
+.welcome-card:hover {
+  transform: translateY(-2px);
+  border-color: #e9a875;
+}
+
+.welcome-card:focus-visible {
+  outline: 3px solid var(--accent-ring);
+  outline-offset: 2px;
+}
+
+.welcome-card-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  place-items: center;
+  border-radius: 11px;
+  color: var(--sidebar-active);
+  background: var(--accent-soft);
+  font-size: 23px;
+}
+
+.welcome-card-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.welcome-card-copy strong {
+  color: var(--heading);
+  font-size: 15px;
+}
+
+.welcome-card-copy span {
+  font-size: 13px;
+}
+
+.welcome-arrow {
+  margin-left: auto;
+  color: var(--sidebar-active);
+  font-size: 20px;
+}
+
 @media (max-width: 640px) {
   .topbar {
     padding: 0 20px;
@@ -184,6 +295,24 @@ h1 {
 
   .page-content {
     padding: 36px 20px;
+  }
+
+  .welcome-banner {
+    align-items: flex-start;
+    gap: 16px;
+    padding: 26px 22px;
+  }
+
+  .welcome-mark {
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
+    border-radius: 13px;
+    font-size: 25px;
+  }
+
+  .welcome-actions {
+    grid-template-columns: 1fr;
   }
 }
 
