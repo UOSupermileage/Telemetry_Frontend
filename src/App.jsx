@@ -53,6 +53,14 @@ function App() {
     }, ...current])
   }
 
+  const updateRun = (updatedRun) => {
+    setRuns((current) => current.map((run) => run.run_id === updatedRun.run_id ? { ...run, ...updatedRun } : run))
+  }
+
+  const deleteRun = (deletedRun) => {
+    setRuns((current) => current.filter((run) => run.run_id !== deletedRun.run_id))
+  }
+
   const content = pageContent[activePage]
 
   useEffect(() => {
@@ -96,7 +104,7 @@ function App() {
             {content.description}
           </p>
 
-          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage runs={runs} onRunImport={addRun} onRunSelect={openRunAnalysis} /> : activePage === 'analysis' ? <AnalysisPage runs={runs} selectedRunId={selectedRunId} /> : (
+          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage runs={runs} onRunImport={addRun} onRunUpdate={updateRun} onRunDelete={deleteRun} onRunSelect={openRunAnalysis} /> : activePage === 'analysis' ? <AnalysisPage runs={runs} selectedRunId={selectedRunId} /> : (
 
             <div className="content-placeholder">
 

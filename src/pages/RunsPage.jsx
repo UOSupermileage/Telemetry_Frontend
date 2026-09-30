@@ -2,8 +2,9 @@ import { useState } from 'react'
 import RunsTable from '../components/RunsTable'
 import ImportPopup from '../components/ImportPopup'
 
-function RunsPage({ runs = [], onRunImport = () => {}, onRunSelect }) {
+function RunsPage({ runs = [], onRunImport = () => {}, onRunUpdate = () => {}, onRunDelete = () => {}, onRunSelect }) {
   const [isImportOpen, setIsImportOpen] = useState(false)
+  const [editingRun, setEditingRun] = useState(null)
 
   return (
     <>
@@ -21,7 +22,16 @@ function RunsPage({ runs = [], onRunImport = () => {}, onRunSelect }) {
       <RunsTable
         runs={runs}
         onRunSelect={onRunSelect}
+        onRunEdit={setEditingRun}
+        onRunDelete={onRunDelete}
       />
+
+      {editingRun && <ImportPopup
+        mode="edit"
+        initialRun={editingRun}
+        onClose={() => setEditingRun(null)}
+        onImport={(updatedRun) => { onRunUpdate(updatedRun); setEditingRun(null) }}
+      />}
 
       {isImportOpen && <ImportPopup onClose={() => setIsImportOpen(false)} onImport={(run) => {
         onRunImport(run)
