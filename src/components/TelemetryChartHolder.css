@@ -33,7 +33,7 @@
   height: 18px;
   flex: 0 0 4px;
   border-radius: 4px;
-  background: var(--chart-color, #6657a5);
+  background: #6657a5;
 }
 
 .telemetry-chart-heading h2 {

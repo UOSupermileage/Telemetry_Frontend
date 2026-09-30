@@ -8,7 +8,7 @@ function TelemetryChartHolder({ charts = [] }) {
       {charts.map((chart) => (
         <section className="telemetry-chart-card" key={chart.id}>
           <header className="telemetry-chart-heading">
-            <span className="telemetry-chart-indicator" style={{ '--chart-color': chart.color }} aria-hidden="true" />
+            <span className="telemetry-chart-indicator" style={{ backgroundColor: chart.color }} aria-hidden="true" />
             <h2>{chart.title}</h2>
             <span className="telemetry-chart-unit">{chart.unit}</span>
           </header>
