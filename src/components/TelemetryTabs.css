@@ -40,8 +40,6 @@
   height: 32px;
   place-items: center;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--metric-color, var(--sidebar-active)) 12%, white);
-  color: var(--metric-color, var(--sidebar-active));
   font-size: 15px;
   font-weight: 700;
 }

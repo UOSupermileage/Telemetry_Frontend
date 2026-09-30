@@ -21,7 +21,7 @@ function TelemetryTabs({ visibleMetrics = [], onMetricToggle = () => {} }) {
           aria-pressed={selected}
           onClick={() => onMetricToggle(metric)}
         >
-          <span className="telemetry-tab-icon" style={{ '--metric-color': color }} aria-hidden="true">{icon}</span>
+          <span className="telemetry-tab-icon" style={{ color, backgroundColor: `${color}1a` }} aria-hidden="true">{icon}</span>
           <span className="telemetry-tab-name">{label}</span>
           <span className="telemetry-tab-state">{selected ? 'Shown' : 'Hidden'}</span>
         </button>
