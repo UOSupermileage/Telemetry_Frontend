@@ -72,35 +72,51 @@ function AnalysisPage({ runs = [], selectedRunId: requestedRunId = '' }) {
   return (
     <>
       <RunSelector runs={runs} selectedRunId={effectiveRunId} onRunChange={handleRunChange} />
-      <section className="run-comparison-controls" aria-label="Compare runs">
-        <label htmlFor="compare-run">Compare with</label>
-        <select
-          id="compare-run"
-          value={effectiveCompareRunId}
-          onChange={(event) => setCompareRunId(event.target.value)}
-          disabled={runs.length < 2}
-        >
-          <option value="">No comparison</option>
-          {runs.filter((run) => String(run.run_id) !== String(effectiveRunId)).map((run) => (
-            <option key={run.run_id} value={run.run_id}>{runName(run)}</option>
-          ))}
-        </select>
-      </section>
+      <section className="run-comparison-panel" aria-label="Compare runs">
+        <div className="run-comparison-topline">
+          <div>
+            <span className="comparison-eyebrow">Analysis tools</span>
+            <h2>Compare runs</h2>
+            <p>Overlay telemetry and compare session highlights.</p>
+          </div>
+          <span className="comparison-badge">OPTIONAL</span>
+        </div>
+        <div className="run-comparison-controls">
+          <label htmlFor="compare-run">
+            <span className="comparison-select-label">Compare this run with</span>
+            <span className="comparison-select-hint">Choose another session to overlay its charts.</span>
+          </label>
+          <select
+            id="compare-run"
+            value={effectiveCompareRunId}
+            onChange={(event) => setCompareRunId(event.target.value)}
+            disabled={runs.length < 2}
+          >
+            <option value="">Select a run to compare</option>
+            {runs.filter((run) => String(run.run_id) !== String(effectiveRunId)).map((run) => (
+              <option key={run.run_id} value={run.run_id}>{runName(run)}</option>
+            ))}
+          </select>
+        </div>
 
-      {compareRun && <section className="comparison-summary" aria-label="Run comparison summary">
+      {compareRun ? <div className="comparison-summary" aria-label="Run comparison summary">
         {[primaryRun, compareRun].map((run, index) => {
           const peak = index === 0 ? primaryPeak : comparePeak
           const duration = durationMinutes(run)
-          return <article className="comparison-summary-card" key={run.run_id}>
-            <h2><i style={{ backgroundColor: index === 0 ? '#6657a5' : comparisonColor }} />{runName(run)}</h2>
-            <p><span>Peak speed</span><strong>{peak == null ? 'No telemetry' : `${peak} km/h`}</strong></p>
-            <p><span>Duration</span><strong>{duration == null ? '—' : `${duration} min`}</strong></p>
+          return <article className={`comparison-summary-card${index === 1 ? ' is-compared' : ''}`} key={run.run_id}>
+            <h3><i style={{ backgroundColor: index === 0 ? '#6657a5' : comparisonColor }} />{runName(run)}</h3>
+            <div className="comparison-card-metrics">
+              <p><span>Peak speed</span><strong>{peak == null ? 'No telemetry' : <>{peak}<small> km/h</small></>}</strong></p>
+              <p><span>Duration</span><strong>{duration == null ? '—' : <>{duration}<small> min</small></>}</strong></p>
+            </div>
           </article>
         })}
-        {primaryPeak != null && comparePeak != null && <p className="comparison-delta">
-          Peak speed difference: <strong>{comparePeak - primaryPeak > 0 ? '+' : ''}{comparePeak - primaryPeak} km/h</strong>
-        </p>}
-      </section>}
+        {primaryPeak != null && comparePeak != null && <div className="comparison-delta">
+          <span>Peak speed difference</span>
+          <strong>{comparePeak - primaryPeak > 0 ? '+' : ''}{comparePeak - primaryPeak} <small>km/h</small></strong>
+        </div>}
+      </div> : <p className="comparison-empty">Select a run above to see side-by-side highlights and compare its telemetry with the current run.</p>}
+      </section>
 
       <div className="dashboard-layout">
         <div className="dashboard-sidebar-panel">
