@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { mockCars, mockDrivers, mockLocations } from '../data/mockData'
 import './ImportPopup.css'
 
@@ -70,49 +70,40 @@ export default function ImportPopup({ onClose, onImport, initialRun, mode = 'imp
     const [file, setFile] = useState(null);
     const [isDragging, setIsDragging] = useState(false)
     const [preview, setPreview] = useState(null)
-    const [previewError, setPreviewError] = useState('')
-    const [previewLoading, setPreviewLoading] = useState(false)
 
     const dialogRef = useRef(null)
     const fileInputRef = useRef(null)
-    const openerRef = useRef(document.activeElement)
+    const requestCloseRef = useRef(null)
     const [error, setError] = useState('')
 
-    function requestClose() {
+    const requestClose = useCallback(() => {
         const hasUnsavedChanges = JSON.stringify(form) !== initialFormRef.current || Boolean(file)
         if (hasUnsavedChanges && !window.confirm('Discard your unsaved run details and selected CSV?')) return
         onClose()
-    }
+    }, [form, file, onClose])
+    const currentPreview = preview?.file === file ? preview : null
 
-    const requestCloseRef = useRef(requestClose)
-    requestCloseRef.current = requestClose
+    useEffect(() => {
+        requestCloseRef.current = requestClose
+    }, [requestClose])
 
     useEffect(() => {
         let cancelled = false
-        if (!file) {
-            setPreview(null)
-            setPreviewError('')
-            setPreviewLoading(false)
-            return () => { cancelled = true }
-        }
-        setPreview(null)
-        setPreviewError('')
-        setPreviewLoading(true)
+        if (!file) return () => { cancelled = true }
         file.text().then((text) => {
-            if (!cancelled) setPreview(previewCsv(text))
+            if (!cancelled) setPreview({ file, data: previewCsv(text) })
         }).catch((readError) => {
-            if (!cancelled) setPreviewError(readError instanceof Error ? readError.message : 'This file could not be read in your browser.')
-        }).finally(() => {
-            if (!cancelled) setPreviewLoading(false)
+            if (!cancelled) setPreview({ file, error: readError instanceof Error ? readError.message : 'This file could not be read in your browser.' })
         })
         return () => { cancelled = true }
     }, [file])
 
     useEffect(() => {
         const dialog = dialogRef.current
+        const opener = document.activeElement
         dialog?.querySelector('select, input, textarea, button')?.focus()
         const handleKeyDown = (event) => {
-            if (event.key === 'Escape') requestCloseRef.current()
+            if (event.key === 'Escape') requestCloseRef.current?.()
             if (event.key !== 'Tab' || !dialog) return
             const controls = [...dialog.querySelectorAll('button, input, select, textarea')]
                 .filter((control) => !control.disabled)
@@ -129,7 +120,7 @@ export default function ImportPopup({ onClose, onImport, initialRun, mode = 'imp
         document.addEventListener('keydown', handleKeyDown)
         return () => {
             document.removeEventListener('keydown', handleKeyDown)
-            openerRef.current?.focus?.()
+            opener?.focus?.()
         }
     }, [])
 
@@ -376,17 +367,17 @@ export default function ImportPopup({ onClose, onImport, initialRun, mode = 'imp
                                 <strong>Local preview</strong>
                                 <span>{file.name} · {(file.size / 1024).toFixed(1)} KB</span>
                             </div>
-                            {previewLoading && <p>Reading CSV…</p>}
-                            {previewError && <p className="csv-preview-error" role="alert">{previewError}</p>}
-                            {preview && <>
-                                <p className="csv-preview-count">{preview.rowCount} data {preview.rowCount === 1 ? 'row' : 'rows'} detected · showing up to 5</p>
-                                {preview.headers.length > 0 && <p className="csv-preview-columns"><strong>Columns:</strong> {preview.headers.map((header, index) => header || `Column ${index + 1}`).join(', ')}</p>}
-                                {preview.headers.length > 0 ? <div className="csv-preview-table-wrap">
+                            {file && !currentPreview && <p>Reading CSV…</p>}
+                            {currentPreview?.error && <p className="csv-preview-error" role="alert">{currentPreview.error}</p>}
+                            {currentPreview?.data && <>
+                                <p className="csv-preview-count">{currentPreview.data.rowCount} data {currentPreview.data.rowCount === 1 ? 'row' : 'rows'} detected · showing up to 5</p>
+                                {currentPreview.data.headers.length > 0 && <p className="csv-preview-columns"><strong>Columns:</strong> {currentPreview.data.headers.map((header, index) => header || `Column ${index + 1}`).join(', ')}</p>}
+                                {currentPreview.data.headers.length > 0 ? <div className="csv-preview-table-wrap">
                                     <table className="csv-preview-table">
-                                        <thead><tr>{preview.headers.map((header, index) => <th key={index}>{header || `Column ${index + 1}`}</th>)}</tr></thead>
-                                        <tbody>{preview.rows.length ? preview.rows.map((row, rowIndex) => <tr key={rowIndex}>
-                                            {preview.headers.map((_, index) => <td key={index}>{row[index] ?? ''}</td>)}
-                                        </tr>) : <tr><td colSpan={preview.headers.length}>No data rows found.</td></tr>}</tbody>
+                                        <thead><tr>{currentPreview.data.headers.map((header, index) => <th key={index}>{header || `Column ${index + 1}`}</th>)}</tr></thead>
+                                        <tbody>{currentPreview.data.rows.length ? currentPreview.data.rows.map((row, rowIndex) => <tr key={rowIndex}>
+                                            {currentPreview.data.headers.map((_, index) => <td key={index}>{row[index] ?? ''}</td>)}
+                                        </tr>) : <tr><td colSpan={currentPreview.data.headers.length}>No data rows found.</td></tr>}</tbody>
                                     </table>
                                 </div> : <p className="csv-preview-error">No CSV content found.</p>}
                             </>}
