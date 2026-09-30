@@ -16,12 +16,21 @@ function latestRunId(runs) {
     .sort((a, b) => new Date(b.started_at) - new Date(a.started_at))[0]?.run_id ?? ''
 }
 
-function AnalysisPage({ runs = [] }) {
+function AnalysisPage({ runs = [], selectedRunId: requestedRunId = '' }) {
   const [visibleMetrics, setVisibleMetrics] = useState(charts.map(({ id }) => id))
-  const [selectedRunId, setSelectedRunId] = useState(() => latestRunId(runs))
+  const [selectedRunId, setSelectedRunId] = useState(() => requestedRunId || latestRunId(runs))
   const effectiveRunId = runs.some((run) => String(run.run_id) === String(selectedRunId))
     ? selectedRunId
     : latestRunId(runs)
+  const runCharts = charts.map((chart) => ({
+    ...chart,
+    data: chart.data.filter((point) => String(point.run_id) === String(effectiveRunId)),
+  }))
+
+  const handleRunChange = (runId) => {
+    setSelectedRunId(runId)
+    window.history.replaceState(null, '', `#analysis?run=${encodeURIComponent(runId)}`)
+  }
 
   const toggleMetric = (metric) => {
     setVisibleMetrics((current) => current.includes(metric)
@@ -31,13 +40,13 @@ function AnalysisPage({ runs = [] }) {
 
   return (
     <>
-    <RunSelector runs={runs} selectedRunId={effectiveRunId} onRunChange={setSelectedRunId} />
+    <RunSelector runs={runs} selectedRunId={effectiveRunId} onRunChange={handleRunChange} />
     <div className="dashboard-layout">
       <div className="dashboard-sidebar-panel">
         <DashboardSidebar visibleMetrics={visibleMetrics} onMetricToggle={toggleMetric} />
       </div>
       <div className="dashboard-graph-area">
-        <TelemetryChartHolder charts={charts.filter((chart) => visibleMetrics.includes(chart.id))} />
+        <TelemetryChartHolder charts={runCharts.filter((chart) => visibleMetrics.includes(chart.id))} />
       </div>
     </div>
     </>

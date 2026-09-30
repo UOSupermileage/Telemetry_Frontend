@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { mockCars, mockDrivers, mockLocations } from '../data/mockData'
 import './RunsTable.css'
 
-function RunsTable({ runs = [] }) {
+function RunsTable({ runs = [], onRunSelect }) {
   const [sortConfig, setSortConfig] = useState({
     key: 'started_at',
     direction: 'desc',
@@ -199,7 +199,19 @@ function RunsTable({ runs = [] }) {
               </tr>
             ) : (
               sortedRuns.map((run) => (
-                <tr key={run.run_id}>
+                <tr
+                  key={run.run_id}
+                  className="run-row"
+                  tabIndex={0}
+                  aria-label={`Analyze run ${run.run_id}`}
+                  onClick={() => onRunSelect?.(run)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      onRunSelect?.(run)
+                    }
+                  }}
+                >
                   <td>{run.run_id ?? '-'}</td>
                   <td>{formatDate(run.started_at)}</td>
                   <td>{formatDate(run.ended_at)}</td>
