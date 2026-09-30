@@ -4,7 +4,7 @@ export const navigationPages = [
   { id: 'analysis', label: 'Analysis', icon: '\u25CE' },
 ]
 
-export const telemetry = [
+const latestRunTelemetry = [
   { run_id: 3, tick: 0, throttle: 12, speed: 0, current: 4.2, voltage: 48.1 },
   { run_id: 3, tick: 1, throttle: 28, speed: 12, current: 9.8, voltage: 47.8 },
   { run_id: 3, tick: 2, throttle: 42, speed: 24, current: 15.3, voltage: 47.4 },
@@ -20,6 +20,26 @@ export const telemetry = [
   { run_id: 3, tick: 12, throttle: 82, speed: 91, current: 30.6, voltage: 45.3 },
   { run_id: 3, tick: 13, throttle: 58, speed: 88, current: 21.9, voltage: 46.1 },
   { run_id: 3, tick: 14, throttle: 35, speed: 79, current: 13.2, voltage: 46.9 },
+]
+
+export const telemetry = [
+  ...latestRunTelemetry.map((point) => ({
+    ...point,
+    run_id: 1,
+    speed: Math.round(point.speed * 0.86),
+    throttle: Math.round(point.throttle * 0.92),
+    current: Number((point.current * 0.9).toFixed(1)),
+    voltage: Number((point.voltage + 0.2).toFixed(1)),
+  })),
+  ...latestRunTelemetry.map((point) => ({
+    ...point,
+    run_id: 2,
+    speed: Math.round(point.speed * 1.05),
+    throttle: Math.min(100, Math.round(point.throttle * 1.03)),
+    current: Number((point.current * 1.08).toFixed(1)),
+    voltage: Number((point.voltage - 0.15).toFixed(1)),
+  })),
+  ...latestRunTelemetry,
 ]
 
 export const mockRuns = [
