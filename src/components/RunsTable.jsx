@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { mockCars, mockDrivers, mockLocations } from '../data/mockData'
 import './RunsTable.css'
 
-function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete }) {
+function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete, selectedRunIds = [], onRunSelectionChange = () => {} }) {
   const [sortConfig, setSortConfig] = useState({
     key: 'started_at',
     direction: 'desc',
@@ -12,8 +12,21 @@ function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete }) {
   const [carFilter, setCarFilter] = useState('')
   const [driverFilter, setDriverFilter] = useState('')
   const [locationFilter, setLocationFilter] = useState('')
-  const [openMenuId, setOpenMenuId] = useState(null)
-  const [runPendingDelete, setRunPendingDelete] = useState(null)
+  const [openMenu, setOpenMenu] = useState(null)
+
+  useEffect(() => {
+    if (!openMenu) return undefined
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setOpenMenu(null)
+    }
+    const handlePointerDown = () => setOpenMenu(null)
+    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('pointerdown', handlePointerDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('pointerdown', handlePointerDown)
+    }
+  }, [openMenu])
 
   // Get unique IDs for the filter dropdowns
   const carIds = [...new Set(runs.map((run) => run.car_id).filter((id) => id != null))]
@@ -182,6 +195,7 @@ function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete }) {
 
           <thead>
             <tr>
+              <th scope="col"><span className="visually-hidden">Select run</span></th>
               {renderSortHeader('Run name', 'name')}
               {renderSortHeader('Run ID', 'run_id')}
               {renderSortHeader('Started', 'started_at')}
@@ -191,7 +205,6 @@ function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete }) {
               {renderSortHeader('Location', 'location_id')}
               <th scope="col">Notes</th>
               {renderSortHeader('Created', 'date_created')}
-              <th scope="col"><span className="visually-hidden">Actions</span></th>
             </tr>
           </thead>
 
@@ -206,7 +219,7 @@ function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete }) {
               sortedRuns.map((run) => (
                 <tr
                   key={run.run_id}
-                  className="run-row"
+                  className={`run-row${selectedRunIds.some((id) => String(id) === String(run.run_id)) ? ' is-comparison-selected' : ''}`}
                   tabIndex={0}
                   aria-label={`Analyze run ${run.run_id}`}
                   onClick={() => onRunSelect?.(run)}
@@ -216,7 +229,23 @@ function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete }) {
                       onRunSelect?.(run)
                     }
                   }}
+                  onContextMenu={(event) => {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    setOpenMenu({ run, left: Math.min(event.clientX, window.innerWidth - 170), top: Math.min(event.clientY, window.innerHeight - 100) })
+                  }}
                 >
+                  <td className="run-compare-select-cell">
+                    <input
+                      type="checkbox"
+                      checked={selectedRunIds.some((id) => String(id) === String(run.run_id))}
+                      disabled={selectedRunIds.length >= 2 && !selectedRunIds.some((id) => String(id) === String(run.run_id))}
+                      aria-label={`Select ${run.name || run.run_name || `run ${run.run_id}`} for comparison or actions`}
+                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) => event.stopPropagation()}
+                      onChange={() => onRunSelectionChange(run.run_id)}
+                    />
+                  </td>
                   <td>{run.name || run.run_name || `Run #${run.run_id}`}</td>
                   <td>{run.run_id ?? '-'}</td>
                   <td>{formatDate(run.started_at)}</td>
@@ -226,17 +255,6 @@ function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete }) {
                   <td>{run.location_id == null ? '-' : locationName(run.location_id)}</td>
                   <td>{run.notes || '-'}</td>
                   <td>{formatDate(run.date_created)}</td>
-                  <td className="run-actions-cell">
-                    <div className="run-actions-menu-wrap">
-                      <button type="button" className="run-edit-button" aria-label={`Actions for run ${run.name || run.run_name || run.run_id}`} title="Run actions" aria-haspopup="menu" aria-expanded={openMenuId === run.run_id} onClick={(event) => { event.stopPropagation(); setOpenMenuId((current) => current === run.run_id ? null : run.run_id) }} onKeyDown={(event) => event.stopPropagation()}>
-                        <span aria-hidden="true">••</span>
-                      </button>
-                      {openMenuId === run.run_id && <div className="run-actions-menu" role="menu" onClick={(event) => event.stopPropagation()}>
-                        <button type="button" role="menuitem" onClick={() => { setOpenMenuId(null); onRunEdit?.(run) }}>Edit</button>
-                        <button type="button" role="menuitem" className="delete-run-action" onClick={() => { setOpenMenuId(null); setRunPendingDelete(run) }}>Delete</button>
-                      </div>}
-                    </div>
-                  </td>
                 </tr>
               ))
             )}
@@ -244,15 +262,15 @@ function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete }) {
 
         </table>
       </div>
-      {runPendingDelete && <div className="delete-confirm-overlay" onClick={() => setRunPendingDelete(null)}>
-        <section className="delete-confirm-popup" role="alertdialog" aria-modal="true" aria-labelledby="delete-run-title" aria-describedby="delete-run-description" onClick={(event) => event.stopPropagation()}>
-          <h2 id="delete-run-title">Delete run?</h2>
-          <p id="delete-run-description">Are you sure you want to delete <strong>{runPendingDelete.name || runPendingDelete.run_name || `Run #${runPendingDelete.run_id}`}</strong>? This action cannot be undone.</p>
-          <div className="delete-confirm-actions">
-            <button type="button" className="delete-cancel-button" onClick={() => setRunPendingDelete(null)}>Cancel</button>
-            <button type="button" className="delete-confirm-button" onClick={() => { onRunDelete?.(runPendingDelete); setRunPendingDelete(null) }}>Delete run</button>
-          </div>
-        </section>
+      {openMenu && <div
+        className="run-row-context-menu"
+        role="menu"
+        style={{ left: openMenu.left, top: openMenu.top }}
+        onPointerDown={(event) => event.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button type="button" role="menuitem" onClick={() => { onRunEdit?.(openMenu.run); setOpenMenu(null) }}>Edit run</button>
+        <button type="button" role="menuitem" className="delete-run-action" onClick={() => { onRunDelete?.(openMenu.run); setOpenMenu(null) }}>Delete run</button>
       </div>}
     </div>
   )
