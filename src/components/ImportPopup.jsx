@@ -82,6 +82,9 @@ export default function ImportPopup({ onClose, onImport, initialRun, mode = 'imp
         onClose()
     }, [form, file, onClose])
     const currentPreview = preview?.file === file ? preview : null
+    const blankHeaderColumns = currentPreview?.data?.headers
+        .map((header, index) => header.trim() ? null : index + 1)
+        .filter((index) => index !== null) ?? []
 
     useEffect(() => {
         requestCloseRef.current = requestClose
@@ -178,7 +181,7 @@ export default function ImportPopup({ onClose, onImport, initialRun, mode = 'imp
                     <div>
                         <h2 id="import-title">{mode === 'edit' ? 'Edit run' : 'Import telemetry'}</h2>
                         <p>
-                            {mode === 'edit' ? 'Update the details for this run.' : 'Demo mode: this adds a run in memory for this app session. The CSV is not stored or parsed.'}
+                            {mode === 'edit' ? 'Update the details for this run.' : 'The CSV preview is read locally in your browser. Demo mode adds run details in memory; CSV upload and backend validation are not connected here yet.'}
                         </p>
                     </div>
 
@@ -372,6 +375,7 @@ export default function ImportPopup({ onClose, onImport, initialRun, mode = 'imp
                             {currentPreview?.data && <>
                                 <p className="csv-preview-count">{currentPreview.data.rowCount} data {currentPreview.data.rowCount === 1 ? 'row' : 'rows'} detected · showing up to 5</p>
                                 {currentPreview.data.headers.length > 0 && <p className="csv-preview-columns"><strong>Columns:</strong> {currentPreview.data.headers.map((header, index) => header || `Column ${index + 1}`).join(', ')}</p>}
+                                {blankHeaderColumns.length > 0 && <p className="csv-preview-error" role="status">Missing column names in {blankHeaderColumns.map((index) => `column ${index}`).join(', ')}. The CSV must have a name for every column.</p>}
                                 {currentPreview.data.headers.length > 0 ? <div className="csv-preview-table-wrap">
                                     <table className="csv-preview-table">
                                         <thead><tr>{currentPreview.data.headers.map((header, index) => <th key={index}>{header || `Column ${index + 1}`}</th>)}</tr></thead>
@@ -379,7 +383,7 @@ export default function ImportPopup({ onClose, onImport, initialRun, mode = 'imp
                                             {currentPreview.data.headers.map((_, index) => <td key={index}>{row[index] ?? ''}</td>)}
                                         </tr>) : <tr><td colSpan={currentPreview.data.headers.length}>No data rows found.</td></tr>}</tbody>
                                     </table>
-                                </div> : <p className="csv-preview-error">No CSV content found.</p>}
+                                </div> : <p className="csv-preview-error" role="status">No header row found. The CSV must start with column names.</p>}
                             </>}
                         </div>}
 
