@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { mockCars, mockDrivers, mockLocations } from '../data/mockData'
 import './RunsTable.css'
 
-function RunsTable({ runs = [], onRunSelect }) {
+function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete }) {
   const [sortConfig, setSortConfig] = useState({
     key: 'started_at',
     direction: 'desc',
@@ -12,6 +12,8 @@ function RunsTable({ runs = [], onRunSelect }) {
   const [carFilter, setCarFilter] = useState('')
   const [driverFilter, setDriverFilter] = useState('')
   const [locationFilter, setLocationFilter] = useState('')
+  const [openMenuId, setOpenMenuId] = useState(null)
+  const [runPendingDelete, setRunPendingDelete] = useState(null)
 
   // Get unique IDs for the filter dropdowns
   const carIds = [...new Set(runs.map((run) => run.car_id).filter((id) => id != null))]
@@ -189,13 +191,14 @@ function RunsTable({ runs = [], onRunSelect }) {
               {renderSortHeader('Location', 'location_id')}
               <th scope="col">Notes</th>
               {renderSortHeader('Created', 'date_created')}
+              <th scope="col"><span className="visually-hidden">Actions</span></th>
             </tr>
           </thead>
 
           <tbody>
             {sortedRuns.length === 0 ? (
               <tr>
-                <td colSpan="9" className="no-runs">
+                <td colSpan="10" className="no-runs">
                   No runs found.
                 </td>
               </tr>
@@ -223,6 +226,17 @@ function RunsTable({ runs = [], onRunSelect }) {
                   <td>{run.location_id == null ? '-' : locationName(run.location_id)}</td>
                   <td>{run.notes || '-'}</td>
                   <td>{formatDate(run.date_created)}</td>
+                  <td className="run-actions-cell">
+                    <div className="run-actions-menu-wrap">
+                      <button type="button" className="run-edit-button" aria-label={`Actions for run ${run.name || run.run_name || run.run_id}`} title="Run actions" aria-haspopup="menu" aria-expanded={openMenuId === run.run_id} onClick={(event) => { event.stopPropagation(); setOpenMenuId((current) => current === run.run_id ? null : run.run_id) }} onKeyDown={(event) => event.stopPropagation()}>
+                        <span aria-hidden="true">••</span>
+                      </button>
+                      {openMenuId === run.run_id && <div className="run-actions-menu" role="menu" onClick={(event) => event.stopPropagation()}>
+                        <button type="button" role="menuitem" onClick={() => { setOpenMenuId(null); onRunEdit?.(run) }}>Edit</button>
+                        <button type="button" role="menuitem" className="delete-run-action" onClick={() => { setOpenMenuId(null); setRunPendingDelete(run) }}>Delete</button>
+                      </div>}
+                    </div>
+                  </td>
                 </tr>
               ))
             )}
@@ -230,6 +244,16 @@ function RunsTable({ runs = [], onRunSelect }) {
 
         </table>
       </div>
+      {runPendingDelete && <div className="delete-confirm-overlay" onClick={() => setRunPendingDelete(null)}>
+        <section className="delete-confirm-popup" role="alertdialog" aria-modal="true" aria-labelledby="delete-run-title" aria-describedby="delete-run-description" onClick={(event) => event.stopPropagation()}>
+          <h2 id="delete-run-title">Delete run?</h2>
+          <p id="delete-run-description">Are you sure you want to delete <strong>{runPendingDelete.name || runPendingDelete.run_name || `Run #${runPendingDelete.run_id}`}</strong>? This action cannot be undone.</p>
+          <div className="delete-confirm-actions">
+            <button type="button" className="delete-cancel-button" onClick={() => setRunPendingDelete(null)}>Cancel</button>
+            <button type="button" className="delete-confirm-button" onClick={() => { onRunDelete?.(runPendingDelete); setRunPendingDelete(null) }}>Delete run</button>
+          </div>
+        </section>
+      </div>}
     </div>
   )
 }

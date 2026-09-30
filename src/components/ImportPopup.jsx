@@ -2,10 +2,20 @@ import { useEffect, useRef, useState } from 'react'
 import { mockCars, mockDrivers, mockLocations } from '../data/mockData'
 import './ImportPopup.css'
 
-export default function ImportPopup({ onClose, onImport }) {
-    const [form, setForm] = useState({
-        name: "", car_id: "", driver_id: "", location_id: "", started_at: "", ended_at: "", notes: "",
-    });
+export default function ImportPopup({ onClose, onImport, initialRun, mode = 'import', page = false }) {
+    const asLocalDateTime = (value) => {
+        if (!value) return ''
+        const date = new Date(value)
+        if (Number.isNaN(date.getTime())) return value
+        const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+        return local.toISOString().slice(0, 16)
+    }
+    const [form, setForm] = useState(() => initialRun ? {
+        ...initialRun,
+        name: initialRun.name ?? initialRun.run_name ?? '',
+        car_id: initialRun.car_id ?? '', driver_id: initialRun.driver_id ?? '', location_id: initialRun.location_id ?? '',
+        started_at: asLocalDateTime(initialRun.started_at), ended_at: asLocalDateTime(initialRun.ended_at), notes: initialRun.notes ?? '',
+    } : { name: "", car_id: "", driver_id: "", location_id: "", started_at: "", ended_at: "", notes: "" });
 
     const [file, setFile] = useState(null);
 
@@ -61,14 +71,15 @@ export default function ImportPopup({ onClose, onImport }) {
         }
         setError('')
         const run = { ...form, name: form.name.trim(), car_id: Number(form.car_id), driver_id: Number(form.driver_id), location_id: Number(form.location_id) }
+        if (mode === 'edit') run.run_name = run.name
         if (onImport) onImport(run)
         else onClose()
     }
 
-    return (<div className="import-overlay" onClick={onClose}>
+    return (<div className={page ? 'edit-run-page' : 'import-overlay'} onClick={page ? undefined : onClose}>
             <div
                 ref={dialogRef}
-                className="import-modal"
+                className={page ? 'import-modal edit-run-card' : 'import-modal'}
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="import-title"
@@ -77,20 +88,20 @@ export default function ImportPopup({ onClose, onImport }) {
                 {/* Header */}
                 <div className="modal-header">
                     <div>
-                        <h2 id="import-title">Import telemetry</h2>
+                        <h2 id="import-title">{mode === 'edit' ? 'Edit run' : 'Import telemetry'}</h2>
                         <p>
-                            Demo mode: this adds a run in memory for this app session. The CSV is not stored or parsed.
+                            {mode === 'edit' ? 'Update the details for this run.' : 'Demo mode: this adds a run in memory for this app session. The CSV is not stored or parsed.'}
                         </p>
                     </div>
 
-                    <button
+                    {!page && <button
                         type="button"
                         className="close-btn"
                         onClick={onClose}
                         aria-label="Close"
                     >
                         x
-                    </button>
+                    </button>}
                 </div>
 
                 <form onSubmit={handleSubmit}>
@@ -227,6 +238,7 @@ export default function ImportPopup({ onClose, onImport }) {
                     </section>
 
                     {/* File */}
+                    {mode !== 'edit' && <>
                     <section className="file-section">
                         <h3>Telemetry CSV</h3>
 
@@ -267,6 +279,7 @@ export default function ImportPopup({ onClose, onImport }) {
                                 Remove file
                             </button>)}
                     </section>
+                    </>}
 
                     {/* Footer */}
                     {error && <p className="form-error" role="alert">{error}</p>}
@@ -283,7 +296,7 @@ export default function ImportPopup({ onClose, onImport }) {
                             type="submit"
                             className="submit-btn"
                         >
-                            Import telemetry
+                            {mode === 'edit' ? 'Save changes' : 'Import telemetry'}
                         </button>
                     </div>
                 </form>
