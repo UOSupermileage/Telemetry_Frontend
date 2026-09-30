@@ -33,10 +33,10 @@ function durationMinutes(run) {
   return Number.isFinite(duration) && duration >= 0 ? duration : null
 }
 
-function AnalysisPage({ runs = [], selectedRunId: requestedRunId = '' }) {
+function AnalysisPage({ runs = [], selectedRunId: requestedRunId = '', requestedCompareRunId = '' }) {
   const [visibleMetrics, setVisibleMetrics] = useState(metricDefinitions.map(({ id }) => id))
   const [selectedRunId, setSelectedRunId] = useState(() => requestedRunId || latestRunId(runs))
-  const [compareRunId, setCompareRunId] = useState('')
+  const [compareRunId, setCompareRunId] = useState(() => requestedCompareRunId)
   const effectiveRunId = runs.some((run) => String(run.run_id) === String(selectedRunId))
     ? selectedRunId
     : latestRunId(runs)

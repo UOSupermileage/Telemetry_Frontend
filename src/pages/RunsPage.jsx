@@ -2,13 +2,29 @@ import { useState } from 'react'
 import RunsTable from '../components/RunsTable'
 import ImportPopup from '../components/ImportPopup'
 
-function RunsPage({ runs = [], onRunImport = () => {}, onRunUpdate = () => {}, onRunDelete = () => {}, onRunSelect }) {
+function RunsPage({ runs = [], onRunImport = () => {}, onRunUpdate = () => {}, onRunDelete = () => {}, onRunSelect, onRunCompare = () => {} }) {
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [editingRun, setEditingRun] = useState(null)
+  const [selectedRunIds, setSelectedRunIds] = useState([])
+  const availableRunIds = selectedRunIds.filter((id) => runs.some((run) => String(run.run_id) === String(id)))
+
+  const toggleRunSelection = (runId) => {
+    setSelectedRunIds((current) => {
+      const validCurrent = current.filter((id) => runs.some((run) => String(run.run_id) === String(id)))
+      const selected = validCurrent.some((id) => String(id) === String(runId))
+      if (selected) return validCurrent.filter((id) => String(id) !== String(runId))
+      return validCurrent.length < 2 ? [...validCurrent, runId] : validCurrent
+    })
+  }
 
   return (
     <>
       <div className="runs-heading-actions">
+        <div className="run-comparison-actions" aria-live="polite">
+          <span>{availableRunIds.length} of 2 selected</span>
+          <button type="button" className="clear-run-selection" onClick={() => setSelectedRunIds([])} disabled={availableRunIds.length === 0}>Clear</button>
+          <button type="button" className="compare-runs-button" onClick={() => onRunCompare(availableRunIds)} disabled={availableRunIds.length !== 2}>Compare runs</button>
+        </div>
         <button
           type="button"
           className="add-run-button"
@@ -24,6 +40,8 @@ function RunsPage({ runs = [], onRunImport = () => {}, onRunUpdate = () => {}, o
         onRunSelect={onRunSelect}
         onRunEdit={setEditingRun}
         onRunDelete={onRunDelete}
+        selectedRunIds={availableRunIds}
+        onRunSelectionChange={toggleRunSelection}
       />
 
       {editingRun && <ImportPopup

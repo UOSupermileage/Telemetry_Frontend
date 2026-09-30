@@ -108,8 +108,55 @@ h1 {
 
 .runs-heading-actions {
   display: flex;
+  align-items: center;
+  gap: 12px;
   justify-content: flex-end;
   margin: -18px 0 16px;
+}
+
+.run-comparison-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 5px 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--card-bg);
+  color: var(--body);
+  font-size: 11px;
+}
+
+.run-comparison-actions button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--body);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.run-comparison-actions .compare-runs-button {
+  border-color: var(--sidebar-active);
+  background: var(--sidebar-active);
+  color: #fff;
+}
+
+.run-comparison-actions .compare-runs-button:hover:not(:disabled) {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
+}
+
+.run-comparison-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.run-comparison-actions button:focus-visible {
+  outline: 3px solid var(--accent-ring);
+  outline-offset: 2px;
 }
 
 .add-run-button {
@@ -293,6 +340,15 @@ h1 {
 }
 
 @media (max-width: 640px) {
+  .runs-heading-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .run-comparison-actions {
+    justify-content: space-between;
+  }
+
   .topbar {
     padding: 0 20px;
   }

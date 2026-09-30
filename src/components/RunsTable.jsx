@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { mockCars, mockDrivers, mockLocations } from '../data/mockData'
 import './RunsTable.css'
 
-function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete }) {
+function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete, selectedRunIds = [], onRunSelectionChange = () => {} }) {
   const [sortConfig, setSortConfig] = useState({
     key: 'started_at',
     direction: 'desc',
@@ -182,6 +182,7 @@ function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete }) {
 
           <thead>
             <tr>
+              <th scope="col"><span className="visually-hidden">Compare selection</span></th>
               {renderSortHeader('Run name', 'name')}
               {renderSortHeader('Run ID', 'run_id')}
               {renderSortHeader('Started', 'started_at')}
@@ -198,7 +199,7 @@ function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete }) {
           <tbody>
             {sortedRuns.length === 0 ? (
               <tr>
-                <td colSpan="10" className="no-runs">
+                <td colSpan="11" className="no-runs">
                   No runs found.
                 </td>
               </tr>
@@ -206,7 +207,7 @@ function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete }) {
               sortedRuns.map((run) => (
                 <tr
                   key={run.run_id}
-                  className="run-row"
+                  className={`run-row${selectedRunIds.some((id) => String(id) === String(run.run_id)) ? ' is-comparison-selected' : ''}`}
                   tabIndex={0}
                   aria-label={`Analyze run ${run.run_id}`}
                   onClick={() => onRunSelect?.(run)}
@@ -217,6 +218,17 @@ function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete }) {
                     }
                   }}
                 >
+                  <td className="run-compare-select-cell">
+                    <input
+                      type="checkbox"
+                      checked={selectedRunIds.some((id) => String(id) === String(run.run_id))}
+                      disabled={selectedRunIds.length >= 2 && !selectedRunIds.some((id) => String(id) === String(run.run_id))}
+                      aria-label={`Select ${run.name || run.run_name || `run ${run.run_id}`} for comparison`}
+                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) => event.stopPropagation()}
+                      onChange={() => onRunSelectionChange(run.run_id)}
+                    />
+                  </td>
                   <td>{run.name || run.run_name || `Run #${run.run_id}`}</td>
                   <td>{run.run_id ?? '-'}</td>
                   <td>{formatDate(run.started_at)}</td>

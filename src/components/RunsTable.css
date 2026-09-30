@@ -91,6 +91,27 @@
   background: var(--surface-muted);
 }
 
+.runs-table tbody tr.run-row.is-comparison-selected {
+  background: #fff7f0;
+}
+
+.run-compare-select-cell {
+  width: 44px;
+  text-align: center;
+}
+
+.run-compare-select-cell input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--sidebar-active);
+  cursor: pointer;
+}
+
+.run-compare-select-cell input:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
 .runs-table tbody tr.run-row:focus-visible {
   outline: 3px solid var(--accent-ring);
   outline-offset: -3px;

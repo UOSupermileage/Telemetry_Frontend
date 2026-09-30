@@ -34,15 +34,28 @@ function getRunIdFromHash() {
   return new URLSearchParams(window.location.hash.split('?')[1] || '').get('run') || ''
 }
 
+function getCompareRunIdFromHash() {
+  return new URLSearchParams(window.location.hash.split('?')[1] || '').get('compare') || ''
+}
+
 function App() {
   const [activePage, setActivePage] = useState(getPageFromHash)
   const [runs, setRuns] = useState(mockRuns)
   const [selectedRunId, setSelectedRunId] = useState(getRunIdFromHash)
+  const [compareRunId, setCompareRunId] = useState(getCompareRunIdFromHash)
 
   const openRunAnalysis = (run) => {
     setSelectedRunId(run.run_id)
+    setCompareRunId('')
     setActivePage('analysis')
     window.location.hash = `analysis?run=${encodeURIComponent(run.run_id)}`
+  }
+
+  const openRunComparison = ([firstRunId, secondRunId]) => {
+    setSelectedRunId(firstRunId)
+    setCompareRunId(secondRunId)
+    setActivePage('analysis')
+    window.location.hash = `analysis?run=${encodeURIComponent(firstRunId)}&compare=${encodeURIComponent(secondRunId)}`
   }
 
   const addRun = (run) => {
@@ -67,6 +80,7 @@ function App() {
     const handleHashChange = () => {
       setActivePage(getPageFromHash())
       setSelectedRunId(getRunIdFromHash())
+      setCompareRunId(getCompareRunIdFromHash())
     }
 
     window.addEventListener('hashchange', handleHashChange)
@@ -104,7 +118,7 @@ function App() {
             {content.description}
           </p>
 
-          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage runs={runs} onRunImport={addRun} onRunUpdate={updateRun} onRunDelete={deleteRun} onRunSelect={openRunAnalysis} /> : activePage === 'analysis' ? <AnalysisPage runs={runs} selectedRunId={selectedRunId} /> : (
+          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage runs={runs} onRunImport={addRun} onRunUpdate={updateRun} onRunDelete={deleteRun} onRunSelect={openRunAnalysis} onRunCompare={openRunComparison} /> : activePage === 'analysis' ? <AnalysisPage runs={runs} selectedRunId={selectedRunId} requestedCompareRunId={compareRunId} /> : (
 
             <div className="content-placeholder">
 
