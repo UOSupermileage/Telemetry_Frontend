@@ -28,6 +28,7 @@ function RunsTable({ runs = [], onRunSelect }) {
 
       const matchesSearch =
         !search ||
+        String(run.name ?? run.run_name ?? '').toLowerCase().includes(searchText) ||
         String(run.run_id ?? '').toLowerCase().includes(searchText) ||
         String(run.car_id ?? '').toLowerCase().includes(searchText) ||
         String(run.driver_id ?? '').toLowerCase().includes(searchText) ||
@@ -179,6 +180,7 @@ function RunsTable({ runs = [], onRunSelect }) {
 
           <thead>
             <tr>
+              {renderSortHeader('Run name', 'name')}
               {renderSortHeader('Run ID', 'run_id')}
               {renderSortHeader('Started', 'started_at')}
               {renderSortHeader('Ended', 'ended_at')}
@@ -193,7 +195,7 @@ function RunsTable({ runs = [], onRunSelect }) {
           <tbody>
             {sortedRuns.length === 0 ? (
               <tr>
-                <td colSpan="8" className="no-runs">
+                <td colSpan="9" className="no-runs">
                   No runs found.
                 </td>
               </tr>
@@ -212,6 +214,7 @@ function RunsTable({ runs = [], onRunSelect }) {
                     }
                   }}
                 >
+                  <td>{run.name || run.run_name || `Run #${run.run_id}`}</td>
                   <td>{run.run_id ?? '-'}</td>
                   <td>{formatDate(run.started_at)}</td>
                   <td>{formatDate(run.ended_at)}</td>
