@@ -2,14 +2,18 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 20px;
-  max-height: max(200px, calc(100svh - 220px));
+  max-height: max(0px, calc(100svh - 420px));
   overflow-y: auto;
-  padding-right: 8px;
+  padding: 0 8px 8px 0;
+  scroll-snap-type: y mandatory;
+  scroll-padding-top: 2px;
   scrollbar-gutter: stable;
 }
 
 .telemetry-chart-card {
   min-width: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
   padding: 20px;
   border: 1px solid var(--border);
   border-radius: 12px;
