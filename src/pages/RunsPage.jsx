@@ -7,6 +7,15 @@ function RunsPage({ runs = [], onRunImport = () => {}, onRunUpdate = () => {}, o
   const [editingRun, setEditingRun] = useState(null)
   const [selectedRunIds, setSelectedRunIds] = useState([])
   const availableRunIds = selectedRunIds.filter((id) => runs.some((run) => String(run.run_id) === String(id)))
+  const selectedRun = runs.find((run) => String(run.run_id) === String(availableRunIds[0]))
+
+  const deleteSelectedRun = () => {
+    if (!selectedRun) return
+    const runLabel = selectedRun.name || selectedRun.run_name || `Run #${selectedRun.run_id}`
+    if (!window.confirm(`Delete ${runLabel}? This action cannot be undone.`)) return
+    onRunDelete(selectedRun)
+    setSelectedRunIds([])
+  }
 
   const toggleRunSelection = (runId) => {
     setSelectedRunIds((current) => {
@@ -23,6 +32,10 @@ function RunsPage({ runs = [], onRunImport = () => {}, onRunUpdate = () => {}, o
         <div className="run-comparison-actions" aria-live="polite">
           <span>{availableRunIds.length} of 2 selected</span>
           <button type="button" className="clear-run-selection" onClick={() => setSelectedRunIds([])} disabled={availableRunIds.length === 0}>Clear</button>
+          {availableRunIds.length === 1 && <>
+            <button type="button" className="edit-selected-run" onClick={() => setEditingRun(selectedRun)}>Edit run</button>
+            <button type="button" className="delete-selected-run" onClick={deleteSelectedRun}>Delete run</button>
+          </>}
           <button type="button" className="compare-runs-button" onClick={() => onRunCompare(availableRunIds)} disabled={availableRunIds.length !== 2}>Compare runs</button>
         </div>
         <button
@@ -38,8 +51,6 @@ function RunsPage({ runs = [], onRunImport = () => {}, onRunUpdate = () => {}, o
       <RunsTable
         runs={runs}
         onRunSelect={onRunSelect}
-        onRunEdit={setEditingRun}
-        onRunDelete={onRunDelete}
         selectedRunIds={availableRunIds}
         onRunSelectionChange={toggleRunSelection}
       />

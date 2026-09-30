@@ -154,6 +154,16 @@ h1 {
   opacity: 0.42;
 }
 
+.run-comparison-actions .edit-selected-run {
+  border-color: var(--border);
+  background: var(--surface-muted);
+  color: var(--heading);
+}
+
+.run-comparison-actions .delete-selected-run {
+  color: #b42318;
+}
+
 .run-comparison-actions button:focus-visible {
   outline: 3px solid var(--accent-ring);
   outline-offset: 2px;
