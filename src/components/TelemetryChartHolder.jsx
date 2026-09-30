@@ -7,7 +7,11 @@ function TelemetryChartHolder({ charts = [] }) {
       {charts.length === 0 && <p className="telemetry-empty">No telemetry metrics are selected. Select a metric to show its chart.</p>}
       {charts.map((chart) => (
         <section className="telemetry-chart-card" key={chart.id}>
-          <h2>{chart.title}</h2>
+          <header className="telemetry-chart-heading">
+            <span className="telemetry-chart-indicator" style={{ backgroundColor: chart.color }} aria-hidden="true" />
+            <h2>{chart.title}</h2>
+            <span className="telemetry-chart-unit">{chart.unit}</span>
+          </header>
           <TelemetryChart
             data={chart.data}
             xKey={chart.xKey}
