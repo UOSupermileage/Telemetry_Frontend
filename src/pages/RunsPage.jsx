@@ -2,7 +2,7 @@ import { useState } from 'react'
 import RunsTable from '../components/RunsTable'
 import ImportPopup from '../components/ImportPopup'
 
-function RunsPage({ runs = [], onRunImport = () => {} }) {
+function RunsPage({ runs = [], onRunImport = () => {}, onRunSelect }) {
   const [isImportOpen, setIsImportOpen] = useState(false)
 
   return (
@@ -20,6 +20,7 @@ function RunsPage({ runs = [], onRunImport = () => {} }) {
 
       <RunsTable
         runs={runs}
+        onRunSelect={onRunSelect}
       />
 
       {isImportOpen && <ImportPopup onClose={() => setIsImportOpen(false)} onImport={(run) => {

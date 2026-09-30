@@ -83,6 +83,19 @@
   white-space: nowrap;
 }
 
+.runs-table tbody tr.run-row {
+  cursor: pointer;
+}
+
+.runs-table tbody tr.run-row:hover {
+  background: var(--surface-muted);
+}
+
+.runs-table tbody tr.run-row:focus-visible {
+  outline: 3px solid var(--accent-ring);
+  outline-offset: -3px;
+}
+
 .runs-table tbody tr:last-child td {
   border-bottom: none;
 }

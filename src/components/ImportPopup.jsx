@@ -4,7 +4,7 @@ import './ImportPopup.css'
 
 export default function ImportPopup({ onClose, onImport }) {
     const [form, setForm] = useState({
-        car_id: "", driver_id: "", location_id: "", started_at: "", ended_at: "", notes: "",
+        name: "", car_id: "", driver_id: "", location_id: "", started_at: "", ended_at: "", notes: "",
     });
 
     const [file, setFile] = useState(null);
@@ -50,12 +50,17 @@ export default function ImportPopup({ onClose, onImport }) {
     function handleSubmit(e) {
         e.preventDefault();
 
+        if (!form.name.trim()) {
+            setError('Enter a name for this run.')
+            return
+        }
+
         if (form.ended_at && new Date(form.ended_at) < new Date(form.started_at)) {
             setError('End time must be after the start time.')
             return
         }
         setError('')
-        const run = { ...form, car_id: Number(form.car_id), driver_id: Number(form.driver_id), location_id: Number(form.location_id) }
+        const run = { ...form, name: form.name.trim(), car_id: Number(form.car_id), driver_id: Number(form.driver_id), location_id: Number(form.location_id) }
         if (onImport) onImport(run)
         else onClose()
     }
@@ -94,6 +99,19 @@ export default function ImportPopup({ onClose, onImport }) {
                         <h3>Run details</h3>
 
                         <div className="form-grid">
+                            <div className="field full-width">
+                                <label htmlFor="run-name">Run name *</label>
+                                <input
+                                    id="run-name"
+                                    name="name"
+                                    type="text"
+                                    value={form.name}
+                                    onChange={handleChange}
+                                    placeholder="e.g. Spring setup test"
+                                    required
+                                />
+                            </div>
+
                             {/* Car */}
                             <div className="field">
                                 <label htmlFor="car_id">Car *</label>

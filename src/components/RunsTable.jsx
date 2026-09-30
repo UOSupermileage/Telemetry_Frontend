@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { mockCars, mockDrivers, mockLocations } from '../data/mockData'
 import './RunsTable.css'
 
-function RunsTable({ runs = [] }) {
+function RunsTable({ runs = [], onRunSelect }) {
   const [sortConfig, setSortConfig] = useState({
     key: 'started_at',
     direction: 'desc',
@@ -28,6 +28,7 @@ function RunsTable({ runs = [] }) {
 
       const matchesSearch =
         !search ||
+        String(run.name ?? run.run_name ?? '').toLowerCase().includes(searchText) ||
         String(run.run_id ?? '').toLowerCase().includes(searchText) ||
         String(run.car_id ?? '').toLowerCase().includes(searchText) ||
         String(run.driver_id ?? '').toLowerCase().includes(searchText) ||
@@ -179,6 +180,7 @@ function RunsTable({ runs = [] }) {
 
           <thead>
             <tr>
+              {renderSortHeader('Run name', 'name')}
               {renderSortHeader('Run ID', 'run_id')}
               {renderSortHeader('Started', 'started_at')}
               {renderSortHeader('Ended', 'ended_at')}
@@ -193,13 +195,26 @@ function RunsTable({ runs = [] }) {
           <tbody>
             {sortedRuns.length === 0 ? (
               <tr>
-                <td colSpan="8" className="no-runs">
+                <td colSpan="9" className="no-runs">
                   No runs found.
                 </td>
               </tr>
             ) : (
               sortedRuns.map((run) => (
-                <tr key={run.run_id}>
+                <tr
+                  key={run.run_id}
+                  className="run-row"
+                  tabIndex={0}
+                  aria-label={`Analyze run ${run.run_id}`}
+                  onClick={() => onRunSelect?.(run)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      onRunSelect?.(run)
+                    }
+                  }}
+                >
+                  <td>{run.name || run.run_name || `Run #${run.run_id}`}</td>
                   <td>{run.run_id ?? '-'}</td>
                   <td>{formatDate(run.started_at)}</td>
                   <td>{formatDate(run.ended_at)}</td>

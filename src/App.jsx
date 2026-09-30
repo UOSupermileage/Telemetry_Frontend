@@ -26,13 +26,24 @@ const pageContent = {
 }
 
 function getPageFromHash() {
-  const page = window.location.hash.slice(1)
+  const page = window.location.hash.slice(1).split('?')[0]
   return navigationPages.some(({ id }) => id === page) ? page : 'dashboard'
+}
+
+function getRunIdFromHash() {
+  return new URLSearchParams(window.location.hash.split('?')[1] || '').get('run') || ''
 }
 
 function App() {
   const [activePage, setActivePage] = useState(getPageFromHash)
   const [runs, setRuns] = useState(mockRuns)
+  const [selectedRunId, setSelectedRunId] = useState(getRunIdFromHash)
+
+  const openRunAnalysis = (run) => {
+    setSelectedRunId(run.run_id)
+    setActivePage('analysis')
+    window.location.hash = `analysis?run=${encodeURIComponent(run.run_id)}`
+  }
 
   const addRun = (run) => {
     setRuns((current) => [{
@@ -47,6 +58,7 @@ function App() {
   useEffect(() => {
     const handleHashChange = () => {
       setActivePage(getPageFromHash())
+      setSelectedRunId(getRunIdFromHash())
     }
 
     window.addEventListener('hashchange', handleHashChange)
@@ -84,7 +96,7 @@ function App() {
             {content.description}
           </p>
 
-          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage runs={runs} onRunImport={addRun} /> : activePage === 'analysis' ? <AnalysisPage runs={runs} /> : (
+          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage runs={runs} onRunImport={addRun} onRunSelect={openRunAnalysis} /> : activePage === 'analysis' ? <AnalysisPage runs={runs} selectedRunId={selectedRunId} /> : (
 
             <div className="content-placeholder">
 
