@@ -1,65 +1,33 @@
-import { useState } from 'react'
-import TelemetryChartHolder from '../components/TelemetryChartHolder'
-import DashboardSidebar from '../components/DashboardSidebar'
-import { telemetry } from '../data/mockData'
-
-const charts = [
-  {
-    id: 'speed',
-    title: 'Speed',
-    data: telemetry,
-    yKey: 'speed',
-    unit: 'km/h',
-    color: '#6657a5',
-  },
-  {
-    id: 'throttle',
-    title: 'Throttle',
-    data: telemetry,
-    yKey: 'throttle',
-    unit: '%',
-    color: '#f47700',
-  },
-  {
-    id: 'current',
-    title: 'Current',
-    data: telemetry,
-    yKey: 'current',
-    unit: 'A',
-    color: '#168a78',
-  },
-  {
-    id: 'voltage',
-    title: 'Voltage',
-    data: telemetry,
-    yKey: 'voltage',
-    unit: 'V',
-    color: '#3275a8',
-  },
-]
-
 function DashboardPage() {
-  const [visibleMetrics, setVisibleMetrics] = useState(charts.map(({ id }) => id))
-
-  const toggleMetric = (metric) => {
-    setVisibleMetrics((current) =>
-      current.includes(metric)
-        ? current.filter((item) => item !== metric)
-        : [...current, metric],
-    )
-  }
-
   return (
-    <div className="dashboard-layout">
+    <div className="welcome-page">
+      <section className="welcome-banner">
+        <span className="welcome-mark" aria-hidden="true">◈</span>
+        <div>
+          <p className="welcome-kicker">Telemetry workspace</p>
+          <h2>Welcome to your telemetry hub</h2>
+          <p>Explore vehicle runs, then dive into the data to understand every test.</p>
+        </div>
+      </section>
 
-      <div className="dashboard-sidebar-panel">
-        <DashboardSidebar visibleMetrics={visibleMetrics} onMetricToggle={toggleMetric} />
+      <div className="welcome-actions">
+        <a className="welcome-card" href="#runs">
+          <span className="welcome-card-icon" aria-hidden="true">↻</span>
+          <span className="welcome-card-copy">
+            <strong>Browse runs</strong>
+            <span>Review test sessions and import a new run.</span>
+          </span>
+          <span className="welcome-arrow" aria-hidden="true">→</span>
+        </a>
+        <a className="welcome-card" href="#analysis">
+          <span className="welcome-card-icon" aria-hidden="true">◎</span>
+          <span className="welcome-card-copy">
+            <strong>Explore analysis</strong>
+            <span>View telemetry graphs and compare key metrics.</span>
+          </span>
+          <span className="welcome-arrow" aria-hidden="true">→</span>
+        </a>
       </div>
-
-      <div className="dashboard-graph-area">
-        <TelemetryChartHolder charts={charts.filter((chart) => visibleMetrics.includes(chart.id))} />
-      </div>
-
     </div>
   )
 }
