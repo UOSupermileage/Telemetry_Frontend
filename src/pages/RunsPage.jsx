@@ -9,13 +9,15 @@ function RunsPage({ runs = [], onRunImport = () => {}, onRunUpdate = () => {}, o
   const availableRunIds = selectedRunIds.filter((id) => runs.some((run) => String(run.run_id) === String(id)))
   const selectedRun = runs.find((run) => String(run.run_id) === String(availableRunIds[0]))
 
-  const deleteSelectedRun = () => {
-    if (!selectedRun) return
-    const runLabel = selectedRun.name || selectedRun.run_name || `Run #${selectedRun.run_id}`
+  const deleteRun = (run) => {
+    if (!run) return
+    const runLabel = run.name || run.run_name || `Run #${run.run_id}`
     if (!window.confirm(`Delete ${runLabel}? This action cannot be undone.`)) return
-    onRunDelete(selectedRun)
+    onRunDelete(run)
     setSelectedRunIds([])
   }
+
+  const deleteSelectedRun = () => deleteRun(selectedRun)
 
   const toggleRunSelection = (runId) => {
     setSelectedRunIds((current) => {
@@ -51,6 +53,8 @@ function RunsPage({ runs = [], onRunImport = () => {}, onRunUpdate = () => {}, o
       <RunsTable
         runs={runs}
         onRunSelect={onRunSelect}
+        onRunEdit={setEditingRun}
+        onRunDelete={deleteRun}
         selectedRunIds={availableRunIds}
         onRunSelectionChange={toggleRunSelection}
       />
