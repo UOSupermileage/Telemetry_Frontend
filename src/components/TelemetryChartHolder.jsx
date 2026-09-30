@@ -24,6 +24,7 @@ function TelemetryChartHolder({ charts = [] }) {
             yKey={chart.yKey}
             unit={chart.unit}
             color={chart.color}
+            height={220}
             ariaLabel={chart.title}
           />
         </section>

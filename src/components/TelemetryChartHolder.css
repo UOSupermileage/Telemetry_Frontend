@@ -1,13 +1,14 @@
 .telemetry-chart-holder {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 14px;
   padding: 0 0 24px;
 }
 
 .telemetry-chart-card {
   min-width: 0;
-  padding: 19px 20px 15px;
+  padding: 16px 16px 12px;
   border: 1px solid #e9e5e2;
   border-radius: 14px;
   background: linear-gradient(145deg, #fff 0%, #fff 72%, #fcfaf8 100%);
@@ -90,5 +91,11 @@
   border-radius: 12px;
   color: var(--body);
   text-align: center;
+}
+
+@media (max-width: 980px) {
+  .telemetry-chart-holder {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
