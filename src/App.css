@@ -38,6 +38,7 @@ body {
 .app-shell {
   min-height: 100svh;
   display: flex;
+  align-items: flex-start;
   background: var(--content-bg);
 }
 
@@ -47,6 +48,9 @@ body {
 }
 
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   height: 68px;
   box-sizing: border-box;
   display: flex;
