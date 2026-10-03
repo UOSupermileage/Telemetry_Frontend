@@ -6,15 +6,42 @@
 }
 
 .telemetry-section {
-  padding: 20px;
+  padding: 18px;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--card-bg);
+  border-radius: 14px;
+  background: linear-gradient(155deg, #fff 0%, #fffaf6 100%);
+  box-shadow: 0 8px 24px rgb(35 31 32 / 4%);
 }
 
-.telemetry-section h2 {
-  margin: 0 0 16px;
+.telemetry-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.telemetry-section-heading h2 {
+  margin: 0;
   color: var(--heading);
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.telemetry-section-heading p {
+  margin: 3px 0 0;
+  color: var(--body);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.telemetry-count {
+  padding: 4px 7px;
+  border: 1px solid #f0dfd2;
+  border-radius: 999px;
+  background: #fff7f0;
+  color: #9a4c13;
+  font-size: 10px;
+  font-weight: 700;
 }

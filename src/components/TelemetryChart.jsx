@@ -4,9 +4,11 @@ import 'uplot/dist/uPlot.min.css'
 import './TelemetryChart.css'
 
 const emptyData = []
+const emptySeries = []
 
 function TelemetryChart({
   data = emptyData,
+  series = emptySeries,
   xKey = 'tick',
   yKey = 'value',
   unit = '',
@@ -19,11 +21,15 @@ function TelemetryChart({
   const tooltipElement = useRef(null)
   const chart = useRef(null)
   const points = data ?? emptyData
-  const xValues = useMemo(() => points.map((point) => point[xKey]), [points, xKey])
-  const yValues = useMemo(() => points.map((point) => point[yKey] ?? null), [points, yKey])
+  const plotSeries = useMemo(() => series.length ? series : [{ data: points, label: yKey, color }], [color, points, series, yKey])
+  const xValues = useMemo(() => [...new Set(plotSeries.flatMap(({ data: seriesData }) => seriesData.map((point) => point[xKey])))].sort((a, b) => a - b), [plotSeries, xKey])
+  const yValues = useMemo(() => plotSeries.map(({ data: seriesData }) => {
+    const values = new Map(seriesData.map((point) => [point[xKey], point[yKey] ?? null]))
+    return xValues.map((value) => values.get(value) ?? null)
+  }), [plotSeries, xKey, xValues, yKey])
 
   useEffect(() => {
-    if (!chartElement.current || !points.length) return undefined
+    if (!chartElement.current || !xValues.length) return undefined
 
     const updateTooltip = (plot) => {
       const tooltip = tooltipElement.current
@@ -35,8 +41,7 @@ function TelemetryChart({
       }
 
       const xValue = plot.data[0][index]
-      const yValue = plot.data[1][index]
-      if (xValue == null || yValue == null) {
+      if (xValue == null) {
         tooltip.hidden = true
         return
       }
@@ -45,7 +50,15 @@ function TelemetryChart({
         ? value.toLocaleString(undefined, { maximumFractionDigits: 2 })
         : value
 
-      tooltip.textContent = `${xKey}: ${formatValue(xValue)} | ${yKey}: ${formatValue(yValue)}${unit ? ` ${unit}` : ''}`
+      const values = plotSeries.map((item, seriesIndex) => {
+        const value = plot.data[seriesIndex + 1][index]
+        return value == null ? null : `${item.label}: ${formatValue(value)}${unit ? ` ${unit}` : ''}`
+      }).filter(Boolean)
+      if (values.length === 0) {
+        tooltip.hidden = true
+        return
+      }
+      tooltip.textContent = `${xKey}: ${formatValue(xValue)} | ${values.join(' | ')}`
       tooltip.hidden = false
 
       const containerRect = containerElement.current.getBoundingClientRect()
@@ -83,16 +96,15 @@ function TelemetryChart({
           )),
         },
       ],
-      series: [
-        {},
-        {
-          stroke: color,
-          width: 2.5,
-          points: { show: true, size: 5, fill: '#fff', stroke: color, width: 2 },
-        },
-      ],
+      series: [{}, ...plotSeries.map((item) => ({
+        label: item.label,
+        stroke: item.color,
+        width: 2.5,
+        spanGaps: false,
+        points: { show: plotSeries.length === 1, size: 5, fill: '#fff', stroke: item.color, width: 2 },
+      }))],
       hooks: { setCursor: [updateTooltip] },
-    }, [xValues, yValues], chartElement.current)
+    }, [xValues, ...yValues], chartElement.current)
 
     const observer = new ResizeObserver(([entry]) => {
       chart.current?.setSize({ width: entry.contentRect.width, height })
@@ -104,9 +116,9 @@ function TelemetryChart({
       chart.current?.destroy()
       chart.current = null
     }
-  }, [color, height, points.length, unit, xKey, xValues, yValues])
+  }, [color, height, points.length, plotSeries, unit, xKey, xValues, yValues])
 
-  return points.length
+  return xValues.length
     ? (
       <div className="telemetry-chart-container" ref={containerElement}>
         <div className="telemetry-chart" ref={chartElement} style={{ height }} role="img" aria-label={ariaLabel ?? `${yKey} chart`} />

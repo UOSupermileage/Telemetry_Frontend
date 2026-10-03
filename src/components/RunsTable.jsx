@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { mockCars, mockDrivers, mockLocations } from '../data/mockData'
 import './RunsTable.css'
 
-function RunsTable({ runs = [] }) {
+function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete, selectedRunIds = [], onRunSelectionChange = () => {} }) {
   const [sortConfig, setSortConfig] = useState({
     key: 'started_at',
     direction: 'desc',
@@ -12,6 +12,21 @@ function RunsTable({ runs = [] }) {
   const [carFilter, setCarFilter] = useState('')
   const [driverFilter, setDriverFilter] = useState('')
   const [locationFilter, setLocationFilter] = useState('')
+  const [openMenu, setOpenMenu] = useState(null)
+
+  useEffect(() => {
+    if (!openMenu) return undefined
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setOpenMenu(null)
+    }
+    const handlePointerDown = () => setOpenMenu(null)
+    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('pointerdown', handlePointerDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('pointerdown', handlePointerDown)
+    }
+  }, [openMenu])
 
   // Get unique IDs for the filter dropdowns
   const carIds = [...new Set(runs.map((run) => run.car_id).filter((id) => id != null))]
@@ -28,6 +43,7 @@ function RunsTable({ runs = [] }) {
 
       const matchesSearch =
         !search ||
+        String(run.name ?? run.run_name ?? '').toLowerCase().includes(searchText) ||
         String(run.run_id ?? '').toLowerCase().includes(searchText) ||
         String(run.car_id ?? '').toLowerCase().includes(searchText) ||
         String(run.driver_id ?? '').toLowerCase().includes(searchText) ||
@@ -179,6 +195,8 @@ function RunsTable({ runs = [] }) {
 
           <thead>
             <tr>
+              <th scope="col"><span className="visually-hidden">Select run</span></th>
+              {renderSortHeader('Run name', 'name')}
               {renderSortHeader('Run ID', 'run_id')}
               {renderSortHeader('Started', 'started_at')}
               {renderSortHeader('Ended', 'ended_at')}
@@ -193,13 +211,42 @@ function RunsTable({ runs = [] }) {
           <tbody>
             {sortedRuns.length === 0 ? (
               <tr>
-                <td colSpan="8" className="no-runs">
+                <td colSpan="10" className="no-runs">
                   No runs found.
                 </td>
               </tr>
             ) : (
               sortedRuns.map((run) => (
-                <tr key={run.run_id}>
+                <tr
+                  key={run.run_id}
+                  className={`run-row${selectedRunIds.some((id) => String(id) === String(run.run_id)) ? ' is-comparison-selected' : ''}`}
+                  tabIndex={0}
+                  aria-label={`Analyze run ${run.run_id}`}
+                  onClick={() => onRunSelect?.(run)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      onRunSelect?.(run)
+                    }
+                  }}
+                  onContextMenu={(event) => {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    setOpenMenu({ run, left: Math.min(event.clientX, window.innerWidth - 170), top: Math.min(event.clientY, window.innerHeight - 100) })
+                  }}
+                >
+                  <td className="run-compare-select-cell">
+                    <input
+                      type="checkbox"
+                      checked={selectedRunIds.some((id) => String(id) === String(run.run_id))}
+                      disabled={selectedRunIds.length >= 2 && !selectedRunIds.some((id) => String(id) === String(run.run_id))}
+                      aria-label={`Select ${run.name || run.run_name || `run ${run.run_id}`} for comparison or actions`}
+                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) => event.stopPropagation()}
+                      onChange={() => onRunSelectionChange(run.run_id)}
+                    />
+                  </td>
+                  <td>{run.name || run.run_name || `Run #${run.run_id}`}</td>
                   <td>{run.run_id ?? '-'}</td>
                   <td>{formatDate(run.started_at)}</td>
                   <td>{formatDate(run.ended_at)}</td>
@@ -215,6 +262,16 @@ function RunsTable({ runs = [] }) {
 
         </table>
       </div>
+      {openMenu && <div
+        className="run-row-context-menu"
+        role="menu"
+        style={{ left: openMenu.left, top: openMenu.top }}
+        onPointerDown={(event) => event.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button type="button" role="menuitem" onClick={() => { onRunEdit?.(openMenu.run); setOpenMenu(null) }}>Edit run</button>
+        <button type="button" role="menuitem" className="delete-run-action" onClick={() => { onRunDelete?.(openMenu.run); setOpenMenu(null) }}>Delete run</button>
+      </div>}
     </div>
   )
 }

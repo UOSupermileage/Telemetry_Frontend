@@ -26,13 +26,37 @@ const pageContent = {
 }
 
 function getPageFromHash() {
-  const page = window.location.hash.slice(1)
+  const page = window.location.hash.slice(1).split('?')[0]
   return navigationPages.some(({ id }) => id === page) ? page : 'dashboard'
+}
+
+function getRunIdFromHash() {
+  return new URLSearchParams(window.location.hash.split('?')[1] || '').get('run') || ''
+}
+
+function getCompareRunIdFromHash() {
+  return new URLSearchParams(window.location.hash.split('?')[1] || '').get('compare') || ''
 }
 
 function App() {
   const [activePage, setActivePage] = useState(getPageFromHash)
   const [runs, setRuns] = useState(mockRuns)
+  const [selectedRunId, setSelectedRunId] = useState(getRunIdFromHash)
+  const [compareRunId, setCompareRunId] = useState(getCompareRunIdFromHash)
+
+  const openRunAnalysis = (run) => {
+    setSelectedRunId(run.run_id)
+    setCompareRunId('')
+    setActivePage('analysis')
+    window.location.hash = `analysis?run=${encodeURIComponent(run.run_id)}`
+  }
+
+  const openRunComparison = ([firstRunId, secondRunId]) => {
+    setSelectedRunId(firstRunId)
+    setCompareRunId(secondRunId)
+    setActivePage('analysis')
+    window.location.hash = `analysis?run=${encodeURIComponent(firstRunId)}&compare=${encodeURIComponent(secondRunId)}`
+  }
 
   const addRun = (run) => {
     setRuns((current) => [{
@@ -42,11 +66,21 @@ function App() {
     }, ...current])
   }
 
+  const updateRun = (updatedRun) => {
+    setRuns((current) => current.map((run) => run.run_id === updatedRun.run_id ? { ...run, ...updatedRun } : run))
+  }
+
+  const deleteRun = (deletedRun) => {
+    setRuns((current) => current.filter((run) => run.run_id !== deletedRun.run_id))
+  }
+
   const content = pageContent[activePage]
 
   useEffect(() => {
     const handleHashChange = () => {
       setActivePage(getPageFromHash())
+      setSelectedRunId(getRunIdFromHash())
+      setCompareRunId(getCompareRunIdFromHash())
     }
 
     window.addEventListener('hashchange', handleHashChange)
@@ -84,7 +118,7 @@ function App() {
             {content.description}
           </p>
 
-          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage runs={runs} onRunImport={addRun} /> : activePage === 'analysis' ? <AnalysisPage /> : (
+          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage runs={runs} onRunImport={addRun} onRunUpdate={updateRun} onRunDelete={deleteRun} onRunSelect={openRunAnalysis} onRunCompare={openRunComparison} /> : activePage === 'analysis' ? <AnalysisPage runs={runs} selectedRunId={selectedRunId} requestedCompareRunId={compareRunId} /> : (
 
             <div className="content-placeholder">
 

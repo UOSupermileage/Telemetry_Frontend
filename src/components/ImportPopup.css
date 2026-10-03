@@ -23,6 +23,18 @@
   box-shadow: 0 24px 64px rgb(35 31 32 / 24%);
 }
 
+.edit-run-page {
+  width: 100%;
+}
+.edit-run-card {
+  width: 100%;
+  max-height: none;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .modal-header {
   display: flex;
   align-items: flex-start;
@@ -173,6 +185,12 @@
   background: var(--accent-soft);
 }
 
+.file-drop.is-dragging {
+  border-color: var(--sidebar-active);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+
 .file-drop input {
   position: absolute;
   width: 1px;
@@ -220,6 +238,86 @@
   font: inherit;
   font-size: 13px;
   cursor: pointer;
+}
+
+.csv-preview {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+
+.csv-preview-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+  color: var(--heading);
+  font-size: 12px;
+}
+
+.csv-preview-heading span,
+.csv-preview-count,
+.csv-preview > p {
+  color: var(--body);
+  font-size: 12px;
+}
+
+.csv-preview-count {
+  margin: 8px 0;
+}
+
+.csv-preview-columns {
+  margin: 0 0 9px;
+  overflow-wrap: anywhere;
+  color: var(--body);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.csv-preview-columns strong {
+  color: var(--heading);
+}
+
+.csv-preview-error {
+  color: #b42318 !important;
+}
+
+.csv-preview-table-wrap {
+  max-height: 190px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.csv-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  text-align: left;
+}
+
+.csv-preview-table th,
+.csv-preview-table td {
+  max-width: 180px;
+  padding: 7px 9px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.csv-preview-table th {
+  position: sticky;
+  top: 0;
+  background: var(--surface-muted);
+  color: var(--heading);
+}
+
+.csv-preview-table td {
+  color: var(--body);
 }
 
 .modal-footer {
