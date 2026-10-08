@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react'
 import RunsTable from '../components/RunsTable'
 import ImportPopup from '../components/ImportPopup'
-import { getRecentRuns } from '../services/runs'
+import { getRecentRuns, getRunEditorOptions, updateRun as updateRunRequest } from '../services/runs'
 
 function RunsPage({
-  runs = [],
   onRunImport = () => {},
-  onRunUpdate = () => {},
   onRunDelete = () => {},
   onRunSelect,
   onRunCompare = () => {},
@@ -15,32 +13,42 @@ function RunsPage({
   const [editingRun, setEditingRun] = useState(null)
   const [selectedRunIds, setSelectedRunIds] = useState([])
   const [apiRuns, setApiRuns] = useState([])
+  const [editorOptions, setEditorOptions] = useState(null)
   const [loadError, setLoadError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
 
   // Load runs once when this page mounts. getRecentRuns() makes the HTTP request;
   // this component stores the response so React can render it in the table.
   useEffect(() => {
-    let cancelled = false
+    const controller = new AbortController()
 
-    getRecentRuns()
-      .then((result) => {
-        if (!cancelled) {
-          // `result` is the array of runs returned by the backend.
-          setApiRuns(result)
-          setIsLoading(false)
-        }
+    Promise.all([
+      getRecentRuns({ signal: controller.signal }),
+      getRunEditorOptions({ signal: controller.signal }),
+    ])
+      .then(([result, options]) => {
+        const findId = (records, name) => records.find(
+          (record) => record.name?.trim().toLowerCase() === name?.trim().toLowerCase()
+        )?.id
+        // `result` is the validated array returned by the runs service.
+        setApiRuns(result.map((run) => ({
+          ...run,
+          car_id: findId(options.cars, run.carName),
+          driver_id: findId(options.drivers, run.driverName),
+          location_id: findId(options.locations, run.locationName),
+        })))
+        setEditorOptions(options)
+        setIsLoading(false)
       })
       .catch((error) => {
-        if (!cancelled) {
-          // Keep the table empty and show an error instead of substituting mock data.
-          setLoadError(error.message)
-          setIsLoading(false)
-        }
+        if (error.name === 'AbortError') return
+        // Keep the table empty and show an error instead of substituting mock data.
+        setLoadError(error.message)
+        setIsLoading(false)
       })
 
     return () => {
-      cancelled = true
+      controller.abort()
     }
   }, [])
 
@@ -54,8 +62,8 @@ function RunsPage({
     (run) => String(run.run_id) === String(availableRunIds[0])
   )
 
-  // Confirm the user's intent, then notify the parent. This callback currently
-  // updates frontend state; it does not send a DELETE request to the backend.
+  // Confirm the user's intent, then notify the parent. Delete is not yet wired
+  // to the backend endpoint.
   const deleteRun = (run) => {
     if (!run) return
     const runLabel = run.name || run.run_name || `Run #${run.run_id}`
@@ -65,6 +73,17 @@ function RunsPage({
   }
 
   const deleteSelectedRun = () => deleteRun(selectedRun)
+
+  // Send the edited fields to the backend, then update the visible row with its response.
+  const saveRun = async (changes) => {
+    const savedRun = await updateRunRequest(changes.run_id, changes)
+    setApiRuns((current) => current.map((run) =>
+      String(run.run_id) === String(savedRun.run_id)
+        ? { ...run, ...savedRun, car_id: changes.car_id, driver_id: changes.driver_id, location_id: changes.location_id }
+        : run
+    ))
+    setEditingRun(null)
+  }
 
   // Selection is local UI state and is used for editing, deleting, or comparing.
   const toggleRunSelection = (runId) => {
@@ -147,11 +166,9 @@ function RunsPage({
         <ImportPopup
           mode="edit"
           initialRun={editingRun}
+          editorOptions={editorOptions}
           onClose={() => setEditingRun(null)}
-          onImport={(updatedRun) => {
-            onRunUpdate(updatedRun)
-            setEditingRun(null)
-          }}
+          onImport={saveRun}
         />
       )}
 

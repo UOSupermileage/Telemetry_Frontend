@@ -68,10 +68,6 @@ function App() {
     }, ...current])
   }
 
-  const updateRun = (updatedRun) => {
-    setRuns((current) => current.map((run) => run.run_id === updatedRun.run_id ? { ...run, ...updatedRun } : run))
-  }
-
   const deleteRun = (deletedRun) => {
     setRuns((current) => current.filter((run) => run.run_id !== deletedRun.run_id))
   }
@@ -157,7 +153,7 @@ function App() {
             {content.description}
           </p>
 
-          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage runs={runs} onRunImport={addRun} onRunUpdate={updateRun} onRunDelete={deleteRun} onRunSelect={openRunAnalysis} onRunCompare={openRunComparison} /> : activePage === 'analysis' ? <AnalysisPage runs={runs} selectedRunId={selectedRunId} requestedCompareRunId={compareRunId} /> : (
+          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage onRunImport={addRun} onRunDelete={deleteRun} onRunSelect={openRunAnalysis} onRunCompare={openRunComparison} /> : activePage === 'analysis' ? <AnalysisPage runs={runs} selectedRunId={selectedRunId} requestedCompareRunId={compareRunId} /> : (
 
             <div className="content-placeholder">
 
