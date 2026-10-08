@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
 import NavigationBar from './components/NavigationBar'
@@ -43,6 +43,8 @@ function App() {
   const [runs, setRuns] = useState(mockRuns)
   const [selectedRunId, setSelectedRunId] = useState(getRunIdFromHash)
   const [compareRunId, setCompareRunId] = useState(getCompareRunIdFromHash)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const profileMenuRef = useRef(null)
 
   const openRunAnalysis = (run) => {
     setSelectedRunId(run.run_id)
@@ -90,6 +92,23 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!profileOpen) return undefined
+
+    const closeProfileMenu = (event) => {
+      if (event.type === 'keydown' && event.key !== 'Escape') return
+      if (event.type === 'pointerdown' && profileMenuRef.current?.contains(event.target)) return
+      setProfileOpen(false)
+    }
+
+    document.addEventListener('pointerdown', closeProfileMenu)
+    document.addEventListener('keydown', closeProfileMenu)
+    return () => {
+      document.removeEventListener('pointerdown', closeProfileMenu)
+      document.removeEventListener('keydown', closeProfileMenu)
+    }
+  }, [profileOpen])
+
   return (
     <div className="app-shell">
 
@@ -103,8 +122,28 @@ function App() {
             Workspace / {content.title}
           </span>
 
-          <div className="user-avatar" role="img" aria-label="User profile: CR">
-            CR
+          <div className="profile-menu-container" ref={profileMenuRef}>
+            <button
+              className="user-avatar"
+              type="button"
+              aria-label="Open profile menu"
+              aria-haspopup="menu"
+              aria-expanded={profileOpen}
+              onClick={() => setProfileOpen((open) => !open)}
+            >
+              CR
+            </button>
+            {profileOpen && (
+              <div className="profile-menu" role="menu" aria-label="Profile">
+                <div className="profile-menu-heading">
+                  <span className="profile-menu-avatar" aria-hidden="true">CR</span>
+                  <span><strong>Current user</strong><small>Demo account</small></span>
+                </div>
+                <div className="profile-menu-divider" />
+                <div className="profile-menu-item" role="menuitem" aria-disabled="true">Profile</div>
+                <div className="profile-menu-item" role="menuitem" aria-disabled="true">Account settings</div>
+              </div>
+            )}
           </div>
         </header>
 
