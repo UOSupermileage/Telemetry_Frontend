@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { mockCars, mockDrivers, mockLocations } from '../data/mockData'
 import './RunsTable.css'
 
-function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete, selectedRunIds = [], onRunSelectionChange = () => {} }) {
+function RunsTable({ runs = [], emptyMessage = 'No runs found.', onRunSelect, onRunEdit, onRunDelete, selectedRunIds = [], onRunSelectionChange = () => {} }) {
   const [sortConfig, setSortConfig] = useState({
     key: 'started_at',
     direction: 'desc',
@@ -212,7 +212,7 @@ function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete, selectedRun
             {sortedRuns.length === 0 ? (
               <tr>
                 <td colSpan="10" className="no-runs">
-                  No runs found.
+                  {emptyMessage}
                 </td>
               </tr>
             ) : (
@@ -250,9 +250,9 @@ function RunsTable({ runs = [], onRunSelect, onRunEdit, onRunDelete, selectedRun
                   <td>{run.run_id ?? '-'}</td>
                   <td>{formatDate(run.started_at)}</td>
                   <td>{formatDate(run.ended_at)}</td>
-                  <td>{run.car_id == null ? '-' : carName(run.car_id)}</td>
-                  <td>{run.driver_id == null ? '-' : driverName(run.driver_id)}</td>
-                  <td>{run.location_id == null ? '-' : locationName(run.location_id)}</td>
+                  <td>{run.carName || (run.car_id == null ? '-' : carName(run.car_id))}</td>
+                  <td>{run.driverName || (run.driver_id == null ? '-' : driverName(run.driver_id))}</td>
+                  <td>{run.locationName || (run.location_id == null ? '-' : locationName(run.location_id))}</td>
                   <td>{run.notes || '-'}</td>
                   <td>{formatDate(run.date_created)}</td>
                 </tr>
