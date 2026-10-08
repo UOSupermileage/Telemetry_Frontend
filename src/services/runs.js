@@ -1,5 +1,9 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
 
+function requireApiBaseUrl() {
+  if (!API_BASE_URL) throw new Error('VITE_API_BASE_URL is not configured')
+}
+
 /**
  * A run record returned by the runs API.
  * Keep the optional fields aligned with the backend response contract.
@@ -19,44 +23,122 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
  * @property {string} [notes]
  */
 
+/** Fetch a single run record from the backend. @param {string|number} runId */
+export async function getRun(runId, { signal } = {}) {
+  requireApiBaseUrl()
+  const response = await fetch(`${API_BASE_URL}/runs/${encodeURIComponent(runId)}`, { signal })
+  if (!response.ok) throw new Error(`Could not load run (${response.status})`)
+  return response.json()
+}
+
 /**
- * Fetch recent run records from the backend.
- * The API may return either an array or an object with a `runs` array.
- * @param {{signal?: AbortSignal}} [options]
+ * Fetch a page of runs. The API uses offset/limit pagination.
+ * @param {{offset?: number, limit?: number, signal?: AbortSignal}} [options]
  * @returns {Promise<Run[]>}
- * @throws {Error} If the API URL is not configured, the request fails, or the
- * response does not match a supported runs response shape.
  */
-export async function getRecentRuns({ signal } = {}) {
-  if (!API_BASE_URL) {
-    throw new Error('VITE_API_BASE_URL is not configured')
-  }
-
-  let response
-  try {
-    response = await fetch(`${API_BASE_URL}/runs?limit=6`, { signal })
-  } catch (error) {
-    if (error.name === 'AbortError') throw error
-    throw new Error('Could not reach the runs service', { cause: error })
-  }
-
-  if (!response.ok) {
-    throw new Error(`Could not load runs (${response.status})`)
-  }
-
-  let data
-  try {
-    data = await response.json()
-  } catch (error) {
-    throw new Error('The runs service returned invalid JSON', { cause: error })
-  }
-
-  const runs = Array.isArray(data) ? data : data?.runs
-  if (!Array.isArray(runs)) {
-    throw new Error('The runs service response must be an array or contain a runs array')
-  }
-
+export async function getRuns({ offset = 0, limit = 100, signal } = {}) {
+  requireApiBaseUrl()
+  const query = new URLSearchParams({ offset: String(offset), limit: String(limit) })
+  const response = await fetch(`${API_BASE_URL}/runs?${query}`, { signal })
+  if (!response.ok) throw new Error(`Could not load runs (${response.status})`)
+  const runs = await response.json()
+  if (!Array.isArray(runs)) throw new Error('The runs service response must be an array')
   return runs
+}
+
+/** Fetch every run using the backend's offset/limit pagination. */
+export async function getAllRuns({ signal } = {}) {
+  const pageSize = 100
+  const runs = []
+  let offset = 0
+  let page
+  do {
+    page = await getRuns({ offset, limit: pageSize, signal })
+    runs.push(...page)
+    offset += page.length
+  } while (page.length === pageSize)
+  return runs
+}
+
+/** Create a run record without importing telemetry. */
+export async function createRun(run, { signal } = {}) {
+  requireApiBaseUrl()
+  const response = await fetch(`${API_BASE_URL}/runs`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: run.name,
+      car_id: run.car_id,
+      driver_id: run.driver_id,
+      location_id: run.location_id,
+      started_at: run.started_at,
+      ended_at: run.ended_at || null,
+      notes: run.notes || null,
+    }),
+    signal,
+  })
+  if (!response.ok) {
+    let detail = ''
+    try {
+      const errorBody = await response.json()
+      const message = Array.isArray(errorBody.detail)
+        ? errorBody.detail.map((item) => item.msg).join('; ')
+        : errorBody.detail
+      detail = typeof message === 'string' ? `: ${message}` : ''
+    } catch {
+      // Keep the status code if the server did not return a JSON error body.
+    }
+    throw new Error(`Could not create run (${response.status})${detail}`)
+  }
+  return response.json()
+}
+
+/**
+ * Fetch a page of telemetry points. `fields` are encoded as repeated query keys,
+ * as expected by FastAPI's list query parameter.
+ * @param {{runId: string|number, fields?: string[], startTick?: number, endTick?: number, offset?: number, limit?: number, signal?: AbortSignal}} options
+ */
+export async function getTelemetryData({ runId, fields = ['tick', 'speed'], startTick, endTick, offset = 0, limit = 1000, signal }) {
+  requireApiBaseUrl()
+  const query = new URLSearchParams({ run_id: String(runId), offset: String(offset), limit: String(limit) })
+  fields.forEach((field) => query.append('fields', field))
+  if (startTick != null) query.set('start_tick', String(startTick))
+  if (endTick != null) query.set('end_tick', String(endTick))
+  const response = await fetch(`${API_BASE_URL}/telemetry/data?${query}`, { signal })
+  if (!response.ok) throw new Error(`Could not load telemetry (${response.status})`)
+  const data = await response.json()
+  if (!Array.isArray(data)) throw new Error('The telemetry service response must be an array')
+  return data
+}
+
+/** Fetch all requested telemetry fields, following offset pagination. */
+export async function getAllTelemetryData({ runId, fields = ['tick', 'throttle', 'speed', 'current', 'voltage'], signal }) {
+  const pageSize = 10000
+  const points = []
+  let offset = 0
+  let page
+  do {
+    page = await getTelemetryData({ runId, fields, offset, limit: pageSize, signal })
+    points.push(...page)
+    offset += page.length
+  } while (page.length === pageSize)
+  return points
+}
+
+/** Fetch aggregated performance metrics for one run. */
+export async function getRunAnalytics(runId, { signal } = {}) {
+  requireApiBaseUrl()
+  const response = await fetch(`${API_BASE_URL}/analytics/runs/${encodeURIComponent(runId)}`, { signal })
+  if (!response.ok) throw new Error(`Could not load run analytics (${response.status})`)
+  return response.json()
+}
+
+/** Download the backend-generated CSV for a run. */
+export async function exportTelemetry(runId, { signal } = {}) {
+  requireApiBaseUrl()
+  const response = await fetch(`${API_BASE_URL}/telemetry/export?run_id=${encodeURIComponent(runId)}`, { signal })
+  if (!response.ok) throw new Error(`Could not export telemetry (${response.status})`)
+  return response.blob()
 }
 
 /**

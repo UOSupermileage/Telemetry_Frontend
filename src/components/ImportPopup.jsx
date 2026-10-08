@@ -214,9 +214,9 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
             {/* Header */}
             <div className="modal-header">
                 <div>
-                    <h2 id="import-title">{mode === 'edit' ? 'Edit run' : 'Import telemetry'}</h2>
+                    <h2 id="import-title">{mode === 'edit' ? 'Edit run' : 'Add run'}</h2>
                     <p>
-                        {mode === 'edit' ? 'Update the details for this run.' : 'Run details and the selected CSV will be sent to the telemetry service.'}
+                        {mode === 'edit' ? 'Update the details for this run.' : 'Create a run record, and optionally attach a telemetry CSV.'}
                     </p>
                 </div>
 
@@ -366,7 +366,7 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
                 {/* File */}
                 {mode !== 'edit' && <>
                     <section className="file-section">
-                        <h3>Telemetry CSV</h3>
+                        <h3>Telemetry CSV (optional)</h3>
 
                         <label
                             className={`file-drop${isDragging ? ' is-dragging' : ''}`}
@@ -396,7 +396,6 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
                                 id="telemetry-file"
                                 type="file"
                                 accept=".csv,text/csv"
-                                required
                                 onChange={(e) => {
                                     setFile(e.target.files?.[0] ?? null);
                                 }}
@@ -471,7 +470,7 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
                         className="submit-btn"
                         disabled={isSubmitting}
                     >
-                        {isSubmitting ? 'Saving…' : mode === 'edit' ? 'Save changes' : 'Import telemetry'}
+                        {isSubmitting ? 'Saving…' : mode === 'edit' ? 'Save changes' : file ? 'Import telemetry' : 'Create run'}
                     </button>
                 </div>
             </form>

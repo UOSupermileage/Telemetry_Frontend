@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { mockCars, mockDrivers, mockLocations } from '../data/mockData'
+﻿import { useState } from 'react'
 import './RunSelector.css'
 
 function RunSelector({ runs = [], selectedRunId, onRunChange }) {
@@ -7,22 +6,16 @@ function RunSelector({ runs = [], selectedRunId, onRunChange }) {
   const [search, setSearch] = useState('')
   const selectedRun = runs.find((run) => String(run.run_id) === String(selectedRunId))
   const runName = (run) => run.name || run.run_name || `Run #${run.run_id}`
+  const runDetails = (run) => [
+    run.carName || (run.car_id != null ? `Car ${run.car_id}` : ''),
+    run.driverName || (run.driver_id != null ? `Driver ${run.driver_id}` : ''),
+    run.locationName || (run.location_id != null ? `Location ${run.location_id}` : ''),
+  ].filter(Boolean).join(' · ')
   const query = search.trim().toLowerCase()
-  const filteredRuns = runs.filter((run) => {
-    if (!query) return true
-    const details = [
-      runName(run),
-      run.run_id,
-      mockCars.find(({ id }) => id === Number(run.car_id))?.name,
-      mockDrivers.find(({ id }) => id === Number(run.driver_id))?.name,
-      mockLocations.find(({ id }) => id === Number(run.location_id))?.name,
-      run.notes,
-    ].filter(Boolean).join(' ').toLowerCase()
-    return details.includes(query)
-  })
-  const carName = mockCars.find(({ id }) => id === Number(selectedRun?.car_id))?.name
-  const driverName = mockDrivers.find(({ id }) => id === Number(selectedRun?.driver_id))?.name
-  const locationName = mockLocations.find(({ id }) => id === Number(selectedRun?.location_id))?.name
+  const filteredRuns = runs.filter((run) =>
+    !query || [runName(run), run.run_id, runDetails(run), run.notes]
+      .filter(Boolean).join(' ').toLowerCase().includes(query)
+  )
 
   return (
     <section className={`run-selector ${isOpen ? 'is-open' : ''}`} aria-label="Selected run">
@@ -39,9 +32,7 @@ function RunSelector({ runs = [], selectedRunId, onRunChange }) {
           <span className="selected-run-name">{selectedRun ? runName(selectedRun) : 'No run selected'}</span>
         </span>
         <span className="selected-run-controls">
-          {selectedRun && <span className="selected-run-details">
-            {[carName, driverName, locationName].filter(Boolean).join(' · ')}
-          </span>}
+          {selectedRun && <span className="selected-run-details">{runDetails(selectedRun)}</span>}
           <span className="selected-run-chevron" aria-hidden="true">{isOpen ? '⌃' : '⌄'}</span>
         </span>
       </button>
@@ -68,12 +59,7 @@ function RunSelector({ runs = [], selectedRunId, onRunChange }) {
             }}
           >
             <span className="run-option-name">{runName(run)}</span>
-            <span className="run-option-details">
-              {[mockCars.find(({ id }) => id === Number(run.car_id))?.name,
-                mockDrivers.find(({ id }) => id === Number(run.driver_id))?.name,
-                mockLocations.find(({ id }) => id === Number(run.location_id))?.name]
-                .filter(Boolean).join(' · ')}
-            </span>
+            <span className="run-option-details">{runDetails(run)}</span>
           </button>
         ))}
       </div>}

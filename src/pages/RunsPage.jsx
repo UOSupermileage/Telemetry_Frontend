@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import RunsTable from '../components/RunsTable'
 import ImportPopup from '../components/ImportPopup'
-import { deleteRun as deleteRunRequest, getRecentRuns, getRunEditorOptions, importTelemetry, updateRun as updateRunRequest } from '../services/runs'
+import { createRun, deleteRun as deleteRunRequest, getAllRuns, getRunEditorOptions, importTelemetry, updateRun as updateRunRequest } from '../services/runs'
 
 function attachReferenceIds(runs, options) {
   const findId = (records, name) => records.find(
@@ -30,13 +30,12 @@ function RunsPage({
   const [deletingRunId, setDeletingRunId] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load runs once when this page mounts. getRecentRuns() makes the HTTP request;
-  // this component stores the response so React can render it in the table.
+  // Load all run pages and the reference labels used by the edit form.
   useEffect(() => {
     const controller = new AbortController()
 
     Promise.all([
-      getRecentRuns({ signal: controller.signal }),
+      getAllRuns({ signal: controller.signal }),
       getRunEditorOptions({ signal: controller.signal }),
     ])
       .then(([result, options]) => {
@@ -100,11 +99,12 @@ function RunsPage({
 
   // Upload the CSV and its run metadata, then refresh the table from the API.
   const addRun = async (run, file) => {
-    await importTelemetry({ ...run, file })
+    if (file) await importTelemetry({ ...run, file })
+    else await createRun(run)
     setIsImportOpen(false)
 
     try {
-      const refreshedRuns = await getRecentRuns()
+      const refreshedRuns = await getAllRuns()
       setApiRuns(attachReferenceIds(refreshedRuns, editorOptions))
       setLoadError('')
     } catch (error) {
