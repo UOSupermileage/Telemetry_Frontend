@@ -1,13 +1,22 @@
 import { useEffect, useState } from 'react'
 import RunsTable from '../components/RunsTable'
 import ImportPopup from '../components/ImportPopup'
-import { getRecentRuns } from '../services/runs'
+import { createRun, deleteRun as deleteRunRequest, getAllRuns, getRunEditorOptions, importTelemetry, updateRun as updateRunRequest } from '../services/runs'
+
+function attachReferenceIds(runs, options) {
+  const findId = (records, name) => records.find(
+    (record) => record.name?.trim().toLowerCase() === name?.trim().toLowerCase()
+  )?.id
+
+  return runs.map((run) => ({
+    ...run,
+    car_id: findId(options.cars, run.carName),
+    driver_id: findId(options.drivers, run.driverName),
+    location_id: findId(options.locations, run.locationName),
+  }))
+}
 
 function RunsPage({
-  runs = [],
-  onRunImport = () => {},
-  onRunUpdate = () => {},
-  onRunDelete = () => {},
   onRunSelect,
   onRunCompare = () => {},
 }) {
@@ -15,32 +24,35 @@ function RunsPage({
   const [editingRun, setEditingRun] = useState(null)
   const [selectedRunIds, setSelectedRunIds] = useState([])
   const [apiRuns, setApiRuns] = useState([])
+  const [editorOptions, setEditorOptions] = useState(null)
   const [loadError, setLoadError] = useState('')
+  const [actionError, setActionError] = useState('')
+  const [deletingRunId, setDeletingRunId] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load runs once when this page mounts. getRecentRuns() makes the HTTP request;
-  // this component stores the response so React can render it in the table.
+  // Load all run pages and the reference labels used by the edit form.
   useEffect(() => {
-    let cancelled = false
+    const controller = new AbortController()
 
-    getRecentRuns()
-      .then((result) => {
-        if (!cancelled) {
-          // `result` is the array of runs returned by the backend.
-          setApiRuns(result)
-          setIsLoading(false)
-        }
+    Promise.all([
+      getAllRuns({ signal: controller.signal }),
+      getRunEditorOptions({ signal: controller.signal }),
+    ])
+      .then(([result, options]) => {
+        // `result` is the validated array returned by the runs service.
+        setApiRuns(attachReferenceIds(result, options))
+        setEditorOptions(options)
+        setIsLoading(false)
       })
       .catch((error) => {
-        if (!cancelled) {
-          // Keep the table empty and show an error instead of substituting mock data.
-          setLoadError(error.message)
-          setIsLoading(false)
-        }
+        if (error.name === 'AbortError') return
+        // Keep the table empty and show an error instead of substituting mock data.
+        setLoadError(error.message)
+        setIsLoading(false)
       })
 
     return () => {
-      cancelled = true
+      controller.abort()
     }
   }, [])
 
@@ -54,17 +66,51 @@ function RunsPage({
     (run) => String(run.run_id) === String(availableRunIds[0])
   )
 
-  // Confirm the user's intent, then notify the parent. This callback currently
-  // updates frontend state; it does not send a DELETE request to the backend.
-  const deleteRun = (run) => {
-    if (!run) return
+  // Confirm first; only remove the row locally after the backend confirms deletion.
+  const deleteRun = async (run) => {
+    if (!run || deletingRunId !== null) return
     const runLabel = run.name || run.run_name || `Run #${run.run_id}`
     if (!window.confirm(`Delete ${runLabel}? This action cannot be undone.`)) return
-    onRunDelete(run)
-    setSelectedRunIds([])
+    setDeletingRunId(run.run_id)
+    setActionError('')
+    try {
+      await deleteRunRequest(run.run_id)
+      setApiRuns((current) => current.filter((item) => String(item.run_id) !== String(run.run_id)))
+      setSelectedRunIds((current) => current.filter((id) => String(id) !== String(run.run_id)))
+    } catch (error) {
+      setActionError(error.message)
+    } finally {
+      setDeletingRunId(null)
+    }
   }
 
   const deleteSelectedRun = () => deleteRun(selectedRun)
+
+  // Send the edited fields to the backend, then update the visible row with its response.
+  const saveRun = async (changes) => {
+    const savedRun = await updateRunRequest(changes.run_id, changes)
+    setApiRuns((current) => current.map((run) =>
+      String(run.run_id) === String(savedRun.run_id)
+        ? { ...run, ...savedRun, car_id: changes.car_id, driver_id: changes.driver_id, location_id: changes.location_id }
+        : run
+    ))
+    setEditingRun(null)
+  }
+
+  // Upload the CSV and its run metadata, then refresh the table from the API.
+  const addRun = async (run, file) => {
+    if (file) await importTelemetry({ ...run, file })
+    else await createRun(run)
+    setIsImportOpen(false)
+
+    try {
+      const refreshedRuns = await getAllRuns()
+      setApiRuns(attachReferenceIds(refreshedRuns, editorOptions))
+      setLoadError('')
+    } catch (error) {
+      setLoadError(`Run uploaded, but the run list could not be refreshed: ${error.message}`)
+    }
+  }
 
   // Selection is local UI state and is used for editing, deleting, or comparing.
   const toggleRunSelection = (runId) => {
@@ -82,6 +128,7 @@ function RunsPage({
     <>
       {isLoading && <p role="status">Loading runs from the database…</p>}
       {loadError && <p role="alert">Could not connect to the runs service. Check that the backend and database are running. ({loadError})</p>}
+      {actionError && <p role="alert">{actionError}</p>}
 
       <div className="runs-heading-actions">
         <div className="run-comparison-actions" aria-live="polite">
@@ -107,6 +154,7 @@ function RunsPage({
                 type="button"
                 className="delete-selected-run"
                 onClick={deleteSelectedRun}
+                disabled={deletingRunId !== null}
               >
                 Delete run
               </button>
@@ -126,6 +174,7 @@ function RunsPage({
           type="button"
           className="add-run-button"
           onClick={() => setIsImportOpen(true)}
+          disabled={isLoading || !editorOptions}
         >
           <span aria-hidden="true">+</span>
           Add run
@@ -147,21 +196,17 @@ function RunsPage({
         <ImportPopup
           mode="edit"
           initialRun={editingRun}
+          editorOptions={editorOptions}
           onClose={() => setEditingRun(null)}
-          onImport={(updatedRun) => {
-            onRunUpdate(updatedRun)
-            setEditingRun(null)
-          }}
+          onImport={saveRun}
         />
       )}
 
       {isImportOpen && (
         <ImportPopup
+          editorOptions={editorOptions}
           onClose={() => setIsImportOpen(false)}
-          onImport={(run) => {
-            onRunImport(run)
-            setIsImportOpen(false)
-          }}
+          onImport={addRun}
         />
       )}
     </>

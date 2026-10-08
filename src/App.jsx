@@ -5,7 +5,7 @@ import NavigationBar from './components/NavigationBar'
 import DashboardPage from './pages/DashboardPage'
 import AnalysisPage from './pages/AnalysisPage'
 import RunsPage from './pages/RunsPage'
-import { mockRuns, navigationPages } from './data/mockData'
+import { navigationPages } from './data/mockData'
 
 const pageContent = {
   dashboard: {
@@ -40,7 +40,6 @@ function getCompareRunIdFromHash() {
 
 function App() {
   const [activePage, setActivePage] = useState(getPageFromHash)
-  const [runs, setRuns] = useState(mockRuns)
   const [selectedRunId, setSelectedRunId] = useState(getRunIdFromHash)
   const [compareRunId, setCompareRunId] = useState(getCompareRunIdFromHash)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -58,22 +57,6 @@ function App() {
     setCompareRunId(secondRunId)
     setActivePage('analysis')
     window.location.hash = `analysis?run=${encodeURIComponent(firstRunId)}&compare=${encodeURIComponent(secondRunId)}`
-  }
-
-  const addRun = (run) => {
-    setRuns((current) => [{
-      ...run,
-      run_id: Math.max(0, ...current.map(({ run_id }) => Number(run_id) || 0)) + 1,
-      date_created: new Date().toISOString(),
-    }, ...current])
-  }
-
-  const updateRun = (updatedRun) => {
-    setRuns((current) => current.map((run) => run.run_id === updatedRun.run_id ? { ...run, ...updatedRun } : run))
-  }
-
-  const deleteRun = (deletedRun) => {
-    setRuns((current) => current.filter((run) => run.run_id !== deletedRun.run_id))
   }
 
   const content = pageContent[activePage]
@@ -157,7 +140,7 @@ function App() {
             {content.description}
           </p>
 
-          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage runs={runs} onRunImport={addRun} onRunUpdate={updateRun} onRunDelete={deleteRun} onRunSelect={openRunAnalysis} onRunCompare={openRunComparison} /> : activePage === 'analysis' ? <AnalysisPage runs={runs} selectedRunId={selectedRunId} requestedCompareRunId={compareRunId} /> : (
+          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage onRunSelect={openRunAnalysis} onRunCompare={openRunComparison} /> : activePage === 'analysis' ? <AnalysisPage selectedRunId={selectedRunId} requestedCompareRunId={compareRunId} /> : (
 
             <div className="content-placeholder">
 
