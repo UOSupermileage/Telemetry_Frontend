@@ -13,6 +13,37 @@ const metricDefinitions = [
 ]
 const comparisonColor = '#d34e63'
 const telemetryFields = ['tick', 'throttle', 'speed', 'current', 'voltage']
+const MAX_CHART_POINTS = 1500
+
+/** Keep the first/last sample and each metric's local high and low per bucket. */
+function downsampleTelemetry(points, maxPoints = MAX_CHART_POINTS) {
+  if (points.length <= maxPoints) return points
+
+  const bucketCount = Math.max(1, Math.floor(maxPoints / (metricDefinitions.length * 2 + 2)))
+  const bucketSize = Math.ceil(points.length / bucketCount)
+  const indexes = new Set()
+
+  for (let start = 0; start < points.length; start += bucketSize) {
+    const end = Math.min(points.length, start + bucketSize)
+    indexes.add(start)
+    indexes.add(end - 1)
+
+    for (const { yKey } of metricDefinitions) {
+      let minIndex = -1
+      let maxIndex = -1
+      for (let index = start; index < end; index += 1) {
+        const value = points[index][yKey]
+        if (value == null || !Number.isFinite(Number(value))) continue
+        if (minIndex === -1 || Number(value) < Number(points[minIndex][yKey])) minIndex = index
+        if (maxIndex === -1 || Number(value) > Number(points[maxIndex][yKey])) maxIndex = index
+      }
+      if (minIndex !== -1) indexes.add(minIndex)
+      if (maxIndex !== -1) indexes.add(maxIndex)
+    }
+  }
+
+  return [...indexes].sort((a, b) => a - b).map((index) => points[index])
+}
 
 function latestRunId(runs) {
   return [...runs]
@@ -99,7 +130,7 @@ function AnalysisPage({ selectedRunId: requestedRunId = '', requestedCompareRunI
         getAllTelemetryData({ runId, fields: telemetryFields, signal: controller.signal }),
         getRunAnalytics(runId, { signal: controller.signal }),
       ])
-      return [String(runId), { run, points, analytics }]
+      return [String(runId), { run, points: downsampleTelemetry(points), analytics }]
     }))
       .then((entries) => setAnalysisByRun(Object.fromEntries(entries)))
       .catch((loadError) => {
@@ -219,6 +250,9 @@ function AnalysisPage({ selectedRunId: requestedRunId = '', requestedCompareRunI
           <DashboardSidebar visibleMetrics={visibleMetrics} onMetricToggle={toggleMetric} />
         </div>
         <div className="dashboard-graph-area">
+          {primaryAnalysis && <p className="telemetry-sampling-note">
+            Charts show up to {MAX_CHART_POINTS.toLocaleString()} samples per run, preserving metric highs and lows. Export CSV includes all {primaryAnalysis.analytics.telemetry_points.toLocaleString()} points.
+          </p>}
           <TelemetryChartHolder charts={runCharts.filter((chart) => visibleMetrics.includes(chart.id))} />
         </div>
       </div>

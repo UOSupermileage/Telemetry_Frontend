@@ -274,6 +274,13 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
+.telemetry-sampling-note {
+  margin: 0 0 10px;
+  color: var(--body);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
 .comparison-card-metrics {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
