@@ -60,14 +60,6 @@ function App() {
     window.location.hash = `analysis?run=${encodeURIComponent(firstRunId)}&compare=${encodeURIComponent(secondRunId)}`
   }
 
-  const addRun = (run) => {
-    setRuns((current) => [{
-      ...run,
-      run_id: Math.max(0, ...current.map(({ run_id }) => Number(run_id) || 0)) + 1,
-      date_created: new Date().toISOString(),
-    }, ...current])
-  }
-
   const deleteRun = (deletedRun) => {
     setRuns((current) => current.filter((run) => run.run_id !== deletedRun.run_id))
   }
@@ -153,7 +145,7 @@ function App() {
             {content.description}
           </p>
 
-          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage onRunImport={addRun} onRunDelete={deleteRun} onRunSelect={openRunAnalysis} onRunCompare={openRunComparison} /> : activePage === 'analysis' ? <AnalysisPage runs={runs} selectedRunId={selectedRunId} requestedCompareRunId={compareRunId} /> : (
+          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage onRunDelete={deleteRun} onRunSelect={openRunAnalysis} onRunCompare={openRunComparison} /> : activePage === 'analysis' ? <AnalysisPage runs={runs} selectedRunId={selectedRunId} requestedCompareRunId={compareRunId} /> : (
 
             <div className="content-placeholder">
 

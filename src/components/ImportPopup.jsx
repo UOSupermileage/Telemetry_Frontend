@@ -167,6 +167,10 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
             setError('Enter a name for this run.')
             return
         }
+        if (mode !== 'edit' && !file) {
+            setError('Choose a telemetry CSV file to upload.')
+            return
+        }
 
         if (form.ended_at && new Date(form.ended_at) < new Date(form.started_at)) {
             setError('End time must be after the start time.')
@@ -190,7 +194,7 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
 
         setIsSubmitting(true)
         try {
-            await onImport(run)
+            await onImport(run, file)
         } catch (submitError) {
             setError(submitError instanceof Error ? submitError.message : 'Could not save this run.')
         } finally {
@@ -212,7 +216,7 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
                 <div>
                     <h2 id="import-title">{mode === 'edit' ? 'Edit run' : 'Import telemetry'}</h2>
                     <p>
-                        {mode === 'edit' ? 'Update the details for this run.' : 'The CSV preview is read locally in your browser. Demo mode adds run details in memory; CSV upload and backend validation are not connected here yet.'}
+                        {mode === 'edit' ? 'Update the details for this run.' : 'Run details and the selected CSV will be sent to the telemetry service.'}
                     </p>
                 </div>
 
@@ -258,7 +262,7 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
                             >
                                 <option value="">Select a car</option>
 
-                                {(mode === 'edit' ? editorOptions?.cars ?? [] : mockCars).map((car) => (<option key={car.id} value={car.id}>
+                                {(editorOptions?.cars ?? mockCars).map((car) => (<option key={car.id} value={car.id}>
                                     {car.name}
                                 </option>))}
                             </select>
@@ -277,7 +281,7 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
                             >
                                 <option value="">Select a driver</option>
 
-                                {(mode === 'edit' ? editorOptions?.drivers ?? [] : mockDrivers).map((driver) => (<option
+                                {(editorOptions?.drivers ?? mockDrivers).map((driver) => (<option
                                     key={driver.id}
                                     value={driver.id}
                                 >
@@ -299,7 +303,7 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
                             >
                                 <option value="">Select a location</option>
 
-                                {(mode === 'edit' ? editorOptions?.locations ?? [] : mockLocations).map((location) => (<option
+                                {(editorOptions?.locations ?? mockLocations).map((location) => (<option
                                     key={location.id}
                                     value={location.id}
                                 >

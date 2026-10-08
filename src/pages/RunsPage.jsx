@@ -1,10 +1,22 @@
 import { useEffect, useState } from 'react'
 import RunsTable from '../components/RunsTable'
 import ImportPopup from '../components/ImportPopup'
-import { getRecentRuns, getRunEditorOptions, updateRun as updateRunRequest } from '../services/runs'
+import { getRecentRuns, getRunEditorOptions, importTelemetry, updateRun as updateRunRequest } from '../services/runs'
+
+function attachReferenceIds(runs, options) {
+  const findId = (records, name) => records.find(
+    (record) => record.name?.trim().toLowerCase() === name?.trim().toLowerCase()
+  )?.id
+
+  return runs.map((run) => ({
+    ...run,
+    car_id: findId(options.cars, run.carName),
+    driver_id: findId(options.drivers, run.driverName),
+    location_id: findId(options.locations, run.locationName),
+  }))
+}
 
 function RunsPage({
-  onRunImport = () => {},
   onRunDelete = () => {},
   onRunSelect,
   onRunCompare = () => {},
@@ -27,16 +39,8 @@ function RunsPage({
       getRunEditorOptions({ signal: controller.signal }),
     ])
       .then(([result, options]) => {
-        const findId = (records, name) => records.find(
-          (record) => record.name?.trim().toLowerCase() === name?.trim().toLowerCase()
-        )?.id
         // `result` is the validated array returned by the runs service.
-        setApiRuns(result.map((run) => ({
-          ...run,
-          car_id: findId(options.cars, run.carName),
-          driver_id: findId(options.drivers, run.driverName),
-          location_id: findId(options.locations, run.locationName),
-        })))
+        setApiRuns(attachReferenceIds(result, options))
         setEditorOptions(options)
         setIsLoading(false)
       })
@@ -83,6 +87,20 @@ function RunsPage({
         : run
     ))
     setEditingRun(null)
+  }
+
+  // Upload the CSV and its run metadata, then refresh the table from the API.
+  const addRun = async (run, file) => {
+    await importTelemetry({ ...run, file })
+    setIsImportOpen(false)
+
+    try {
+      const refreshedRuns = await getRecentRuns()
+      setApiRuns(attachReferenceIds(refreshedRuns, editorOptions))
+      setLoadError('')
+    } catch (error) {
+      setLoadError(`Run uploaded, but the run list could not be refreshed: ${error.message}`)
+    }
   }
 
   // Selection is local UI state and is used for editing, deleting, or comparing.
@@ -145,6 +163,7 @@ function RunsPage({
           type="button"
           className="add-run-button"
           onClick={() => setIsImportOpen(true)}
+          disabled={isLoading || !editorOptions}
         >
           <span aria-hidden="true">+</span>
           Add run
@@ -174,11 +193,9 @@ function RunsPage({
 
       {isImportOpen && (
         <ImportPopup
+          editorOptions={editorOptions}
           onClose={() => setIsImportOpen(false)}
-          onImport={(run) => {
-            onRunImport(run)
-            setIsImportOpen(false)
-          }}
+          onImport={addRun}
         />
       )}
     </>

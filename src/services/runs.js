@@ -133,3 +133,46 @@ export async function updateRun(runId, changes, { signal } = {}) {
 
   return response.json()
 }
+
+/**
+ * Upload a run's metadata and telemetry CSV as multipart form data.
+ * The browser sets the multipart Content-Type boundary for FormData.
+ * @param {{file: File, name: string, car_id: number, driver_id: number, location_id: number, started_at: string, ended_at?: string|null, notes?: string|null}} run
+ * @param {{signal?: AbortSignal}} [options]
+ * @returns {Promise<void>}
+ */
+export async function importTelemetry(run, { signal } = {}) {
+  if (!API_BASE_URL) {
+    throw new Error('VITE_API_BASE_URL is not configured')
+  }
+
+  const formData = new FormData()
+  formData.append('file', run.file)
+  formData.append('name', run.name)
+  formData.append('car_id', String(run.car_id))
+  formData.append('driver_id', String(run.driver_id))
+  formData.append('location_id', String(run.location_id))
+  formData.append('started_at', run.started_at)
+  if (run.ended_at) formData.append('ended_at', run.ended_at)
+  if (run.notes) formData.append('notes', run.notes)
+
+  const response = await fetch(`${API_BASE_URL}/telemetry/import`, {
+    method: 'POST',
+    body: formData,
+    signal,
+  })
+
+  if (!response.ok) {
+    let detail = ''
+    try {
+      const errorBody = await response.json()
+      const message = Array.isArray(errorBody.detail)
+        ? errorBody.detail.map((item) => item.msg).join('; ')
+        : errorBody.detail
+      detail = typeof message === 'string' ? `: ${message}` : ''
+    } catch {
+      // Keep the status code if the server did not return a JSON error body.
+    }
+    throw new Error(`Could not import telemetry (${response.status})${detail}`)
+  }
+}
