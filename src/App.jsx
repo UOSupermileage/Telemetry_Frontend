@@ -60,10 +60,6 @@ function App() {
     window.location.hash = `analysis?run=${encodeURIComponent(firstRunId)}&compare=${encodeURIComponent(secondRunId)}`
   }
 
-  const deleteRun = (deletedRun) => {
-    setRuns((current) => current.filter((run) => run.run_id !== deletedRun.run_id))
-  }
-
   const content = pageContent[activePage]
 
   useEffect(() => {
@@ -145,7 +141,7 @@ function App() {
             {content.description}
           </p>
 
-          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage onRunDelete={deleteRun} onRunSelect={openRunAnalysis} onRunCompare={openRunComparison} /> : activePage === 'analysis' ? <AnalysisPage runs={runs} selectedRunId={selectedRunId} requestedCompareRunId={compareRunId} /> : (
+          {activePage === 'dashboard' ? <DashboardPage /> : activePage === 'runs' ? <RunsPage onRunSelect={openRunAnalysis} onRunCompare={openRunComparison} /> : activePage === 'analysis' ? <AnalysisPage runs={runs} selectedRunId={selectedRunId} requestedCompareRunId={compareRunId} /> : (
 
             <div className="content-placeholder">
 

@@ -135,6 +135,37 @@ export async function updateRun(runId, changes, { signal } = {}) {
 }
 
 /**
+ * Permanently delete a run through the backend.
+ * @param {string|number} runId
+ * @param {{signal?: AbortSignal}} [options]
+ * @returns {Promise<void>}
+ */
+export async function deleteRun(runId, { signal } = {}) {
+  if (!API_BASE_URL) {
+    throw new Error('VITE_API_BASE_URL is not configured')
+  }
+
+  const response = await fetch(`${API_BASE_URL}/runs/${encodeURIComponent(runId)}`, {
+    method: 'DELETE',
+    signal,
+  })
+
+  if (!response.ok) {
+    let detail = ''
+    try {
+      const errorBody = await response.json()
+      const message = Array.isArray(errorBody.detail)
+        ? errorBody.detail.map((item) => item.msg).join('; ')
+        : errorBody.detail
+      detail = typeof message === 'string' ? `: ${message}` : ''
+    } catch {
+      // Keep the status code if the server did not return a JSON error body.
+    }
+    throw new Error(`Could not delete run (${response.status})${detail}`)
+  }
+}
+
+/**
  * Upload a run's metadata and telemetry CSV as multipart form data.
  * The browser sets the multipart Content-Type boundary for FormData.
  * @param {{file: File, name: string, car_id: number, driver_id: number, location_id: number, started_at: string, ended_at?: string|null, notes?: string|null}} run

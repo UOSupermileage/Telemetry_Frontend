@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import RunsTable from '../components/RunsTable'
 import ImportPopup from '../components/ImportPopup'
-import { getRecentRuns, getRunEditorOptions, importTelemetry, updateRun as updateRunRequest } from '../services/runs'
+import { deleteRun as deleteRunRequest, getRecentRuns, getRunEditorOptions, importTelemetry, updateRun as updateRunRequest } from '../services/runs'
 
 function attachReferenceIds(runs, options) {
   const findId = (records, name) => records.find(
@@ -17,7 +17,6 @@ function attachReferenceIds(runs, options) {
 }
 
 function RunsPage({
-  onRunDelete = () => {},
   onRunSelect,
   onRunCompare = () => {},
 }) {
@@ -27,6 +26,8 @@ function RunsPage({
   const [apiRuns, setApiRuns] = useState([])
   const [editorOptions, setEditorOptions] = useState(null)
   const [loadError, setLoadError] = useState('')
+  const [actionError, setActionError] = useState('')
+  const [deletingRunId, setDeletingRunId] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
 
   // Load runs once when this page mounts. getRecentRuns() makes the HTTP request;
@@ -66,14 +67,22 @@ function RunsPage({
     (run) => String(run.run_id) === String(availableRunIds[0])
   )
 
-  // Confirm the user's intent, then notify the parent. Delete is not yet wired
-  // to the backend endpoint.
-  const deleteRun = (run) => {
-    if (!run) return
+  // Confirm first; only remove the row locally after the backend confirms deletion.
+  const deleteRun = async (run) => {
+    if (!run || deletingRunId !== null) return
     const runLabel = run.name || run.run_name || `Run #${run.run_id}`
     if (!window.confirm(`Delete ${runLabel}? This action cannot be undone.`)) return
-    onRunDelete(run)
-    setSelectedRunIds([])
+    setDeletingRunId(run.run_id)
+    setActionError('')
+    try {
+      await deleteRunRequest(run.run_id)
+      setApiRuns((current) => current.filter((item) => String(item.run_id) !== String(run.run_id)))
+      setSelectedRunIds((current) => current.filter((id) => String(id) !== String(run.run_id)))
+    } catch (error) {
+      setActionError(error.message)
+    } finally {
+      setDeletingRunId(null)
+    }
   }
 
   const deleteSelectedRun = () => deleteRun(selectedRun)
@@ -119,6 +128,7 @@ function RunsPage({
     <>
       {isLoading && <p role="status">Loading runs from the database…</p>}
       {loadError && <p role="alert">Could not connect to the runs service. Check that the backend and database are running. ({loadError})</p>}
+      {actionError && <p role="alert">{actionError}</p>}
 
       <div className="runs-heading-actions">
         <div className="run-comparison-actions" aria-live="polite">
@@ -144,6 +154,7 @@ function RunsPage({
                 type="button"
                 className="delete-selected-run"
                 onClick={deleteSelectedRun}
+                disabled={deletingRunId !== null}
               >
                 Delete run
               </button>
