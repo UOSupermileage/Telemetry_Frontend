@@ -1,7 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
-import { mockCars, mockDrivers, mockLocations } from '../data/mockData'
 import './RunsTable.css'
 
+/**
+ * Table for filtering, sorting, selecting, and opening run records.
+ * @param {Object} props
+ * @param {import('../services/runs').Run[]} [props.runs] Run records to display.
+ * @param {string} [props.emptyMessage] Message shown when there are no rows.
+ * @param {(run: import('../services/runs').Run) => void} [props.onRunSelect]
+ * @param {(run: import('../services/runs').Run) => void} [props.onRunEdit]
+ * @param {(run: import('../services/runs').Run) => void} [props.onRunDelete]
+ * @param {(string|number)[]} [props.selectedRunIds] IDs selected by the parent.
+ * @param {(runId: string|number) => void} [props.onRunSelectionChange]
+ */
 function RunsTable({ runs = [], emptyMessage = 'No runs found.', onRunSelect, onRunEdit, onRunDelete, selectedRunIds = [], onRunSelectionChange = () => {} }) {
   const [sortConfig, setSortConfig] = useState({
     key: 'started_at',
@@ -32,9 +42,11 @@ function RunsTable({ runs = [], emptyMessage = 'No runs found.', onRunSelect, on
   const carIds = [...new Set(runs.map((run) => run.car_id).filter((id) => id != null))]
   const driverIds = [...new Set(runs.map((run) => run.driver_id).filter((id) => id != null))]
   const locationIds = [...new Set(runs.map((run) => run.location_id).filter((id) => id != null))]
-  const carName = (id) => mockCars.find((item) => item.id === Number(id))?.name ?? `Car ${id}`
-  const driverName = (id) => mockDrivers.find((item) => item.id === Number(id))?.name ?? `Driver ${id}`
-  const locationName = (id) => mockLocations.find((item) => item.id === Number(id))?.name ?? `Location ${id}`
+  // Display names can be supplied by an API response; otherwise show a stable
+  // label from the ID instead of guessing from local mock reference data.
+  const carName = (id) => `Car ${id}`
+  const driverName = (id) => `Driver ${id}`
+  const locationName = (id) => `Location ${id}`
 
   // Filter runs
   const filteredRuns = useMemo(() => {
