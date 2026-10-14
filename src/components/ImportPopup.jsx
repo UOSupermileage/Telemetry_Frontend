@@ -173,13 +173,18 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
         }
         setError('')
         const run = {
-            ...form,
             name: form.name.trim(),
             car_id: Number(form.car_id),
             driver_id: Number(form.driver_id),
-            location_id: Number(form.location_id)
+            location_id: Number(form.location_id),
+            started_at: form.started_at,
+            ended_at: form.ended_at || null,
+            notes: form.notes || null,
         }
-        if (mode === 'edit') run.run_name = run.name
+
+        if (mode === 'edit') {
+            run.run_id = initialRun.run_id
+        }
         if (onImport) onImport(run)
         else onClose()
     }

@@ -1,7 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import RunsTable from '../components/RunsTable'
 import ImportPopup from '../components/ImportPopup'
-import { getRecentRuns } from '../services/runs'
+import { 
+  getRecentRuns,
+  createRun,
+  updateRun,
+  deleteRun as deleteRunApi,
+} from '../services/runs'
 
 function RunsPage({
   runs = [],
@@ -20,29 +25,23 @@ function RunsPage({
 
   // Load runs once when this page mounts. getRecentRuns() makes the HTTP request;
   // this component stores the response so React can render it in the table.
-  useEffect(() => {
-    let cancelled = false
+  const loadRuns = useCallback(async () => {
+  setIsLoading(true)
+  setLoadError('')
 
-    getRecentRuns()
-      .then((result) => {
-        if (!cancelled) {
-          // `result` is the array of runs returned by the backend.
-          setApiRuns(result)
-          setIsLoading(false)
-        }
-      })
-      .catch((error) => {
-        if (!cancelled) {
-          // Keep the table empty and show an error instead of substituting mock data.
-          setLoadError(error.message)
-          setIsLoading(false)
-        }
-      })
+  try {
+    const result = await getRecentRuns()
+    setApiRuns(Array.isArray(result) ? result : [])
+  } catch (error) {
+    setLoadError(error.message)
+  } finally {
+    setIsLoading(false)
+  }
+}, [])
 
-    return () => {
-      cancelled = true
-    }
-  }, [])
+useEffect(() => {
+  loadRuns()
+}, [loadRuns])
 
   // This is the array passed to RunsTable below. It contains only API results.
   const displayRuns = apiRuns
@@ -56,14 +55,23 @@ function RunsPage({
 
   // Confirm the user's intent, then notify the parent. This callback currently
   // updates frontend state; it does not send a DELETE request to the backend.
-  const deleteRun = (run) => {
-    if (!run) return
-    const runLabel = run.name || run.run_name || `Run #${run.run_id}`
-    if (!window.confirm(`Delete ${runLabel}? This action cannot be undone.`)) return
-    onRunDelete(run)
-    setSelectedRunIds([])
+  const deleteRun = async (run) => {
+  if (!run) return
+
+  const runLabel = run.name || `Run #${run.run_id}`
+
+  if (!window.confirm(`Delete ${runLabel}? This action cannot be undone.`)) {
+    return
   }
 
+  try {
+    await deleteRunApi(run.run_id)
+    setSelectedRunIds([])
+    await loadRuns()
+  } catch (error) {
+    setLoadError(`Could not delete run: ${error.message}`)
+  }
+}
   const deleteSelectedRun = () => deleteRun(selectedRun)
 
   // Selection is local UI state and is used for editing, deleting, or comparing.
@@ -148,9 +156,14 @@ function RunsPage({
           mode="edit"
           initialRun={editingRun}
           onClose={() => setEditingRun(null)}
-          onImport={(updatedRun) => {
-            onRunUpdate(updatedRun)
-            setEditingRun(null)
+          onImport={async (updatedRun) => {
+            try {
+              await updateRun(updatedRun.run_id, updatedRun)
+              setEditingRun(null)
+              await loadRuns()
+            } catch (error) {
+              setLoadError(`Could not update run: ${error.message}`)
+            }
           }}
         />
       )}
@@ -158,10 +171,15 @@ function RunsPage({
       {isImportOpen && (
         <ImportPopup
           onClose={() => setIsImportOpen(false)}
-          onImport={(run) => {
-            onRunImport(run)
-            setIsImportOpen(false)
-          }}
+          onImport={async (run) => {
+            try {
+              await createRun(run)
+              setIsImportOpen(false)
+              await loadRuns()
+            } catch (error) {
+              setLoadError(`Could not create run: ${error.message}`)
+            }
+        }}
         />
       )}
     </>
