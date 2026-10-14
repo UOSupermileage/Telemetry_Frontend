@@ -51,7 +51,7 @@ function previewCsv(text) {
     return {headers, rows: previewRows, rowCount: Math.max(0, rowCount - (headers.length ? 1 : 0))}
 }
 
-export default function ImportPopup({onClose, onImport, initialRun, mode = 'import', page = false}) {
+export default function ImportPopup({onClose, onImport, initialRun, mode = 'import', page = false, editorOptions}) {
     const asLocalDateTime = (value) => {
         if (!value) return ''
         const date = new Date(value)
@@ -79,6 +79,7 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
     const fileInputRef = useRef(null)
     const requestCloseRef = useRef(null)
     const [error, setError] = useState('')
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     const requestClose = useCallback(() => {
         const hasUnsavedChanges = JSON.stringify(form) !== initialFormRef.current || Boolean(file)
@@ -159,11 +160,15 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
         }));
     }
 
-    function handleSubmit(e) {
+    async function handleSubmit(e) {
         e.preventDefault();
 
         if (!form.name.trim()) {
             setError('Enter a name for this run.')
+            return
+        }
+        if (mode !== 'edit' && !file) {
+            setError('Choose a telemetry CSV file to upload.')
             return
         }
 
@@ -177,11 +182,24 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
             name: form.name.trim(),
             car_id: Number(form.car_id),
             driver_id: Number(form.driver_id),
-            location_id: Number(form.location_id)
+            location_id: Number(form.location_id),
+            started_at: new Date(form.started_at).toISOString(),
+            ended_at: form.ended_at ? new Date(form.ended_at).toISOString() : null,
         }
         if (mode === 'edit') run.run_name = run.name
-        if (onImport) onImport(run)
-        else onClose()
+        if (!onImport) {
+            onClose()
+            return
+        }
+
+        setIsSubmitting(true)
+        try {
+            await onImport(run, file)
+        } catch (submitError) {
+            setError(submitError instanceof Error ? submitError.message : 'Could not save this run.')
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     return (<div className={page ? 'edit-run-page' : 'import-overlay'} onClick={page ? undefined : requestClose}>
@@ -196,9 +214,9 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
             {/* Header */}
             <div className="modal-header">
                 <div>
-                    <h2 id="import-title">{mode === 'edit' ? 'Edit run' : 'Import telemetry'}</h2>
+                    <h2 id="import-title">{mode === 'edit' ? 'Edit run' : 'Add run'}</h2>
                     <p>
-                        {mode === 'edit' ? 'Update the details for this run.' : 'The CSV preview is read locally in your browser. Demo mode adds run details in memory; CSV upload and backend validation are not connected here yet.'}
+                        {mode === 'edit' ? 'Update the details for this run.' : 'Create a run record, and optionally attach a telemetry CSV.'}
                     </p>
                 </div>
 
@@ -244,7 +262,7 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
                             >
                                 <option value="">Select a car</option>
 
-                                {mockCars.map((car) => (<option key={car.id} value={car.id}>
+                                {(editorOptions?.cars ?? mockCars).map((car) => (<option key={car.id} value={car.id}>
                                     {car.name}
                                 </option>))}
                             </select>
@@ -263,7 +281,7 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
                             >
                                 <option value="">Select a driver</option>
 
-                                {mockDrivers.map((driver) => (<option
+                                {(editorOptions?.drivers ?? mockDrivers).map((driver) => (<option
                                     key={driver.id}
                                     value={driver.id}
                                 >
@@ -285,7 +303,7 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
                             >
                                 <option value="">Select a location</option>
 
-                                {mockLocations.map((location) => (<option
+                                {(editorOptions?.locations ?? mockLocations).map((location) => (<option
                                     key={location.id}
                                     value={location.id}
                                 >
@@ -348,7 +366,7 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
                 {/* File */}
                 {mode !== 'edit' && <>
                     <section className="file-section">
-                        <h3>Telemetry CSV</h3>
+                        <h3>Telemetry CSV (optional)</h3>
 
                         <label
                             className={`file-drop${isDragging ? ' is-dragging' : ''}`}
@@ -378,7 +396,6 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
                                 id="telemetry-file"
                                 type="file"
                                 accept=".csv,text/csv"
-                                required
                                 onChange={(e) => {
                                     setFile(e.target.files?.[0] ?? null);
                                 }}
@@ -443,6 +460,7 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
                         type="button"
                         className="cancel-btn"
                         onClick={requestClose}
+                        disabled={isSubmitting}
                     >
                         Cancel
                     </button>
@@ -450,8 +468,9 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
                     <button
                         type="submit"
                         className="submit-btn"
+                        disabled={isSubmitting}
                     >
-                        {mode === 'edit' ? 'Save changes' : 'Import telemetry'}
+                        {isSubmitting ? 'Saving…' : mode === 'edit' ? 'Save changes' : file ? 'Import telemetry' : 'Create run'}
                     </button>
                 </div>
             </form>
