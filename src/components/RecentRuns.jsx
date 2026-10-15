@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import { mockCars, mockDrivers, mockLocations } from '../data/mockData'
 import './RecentRuns.css'
 
 function RecentRuns({ runs = [], onRunClick }) {
@@ -13,15 +12,6 @@ function RecentRuns({ runs = [], onRunClick }) {
       })
       .slice(0, 5)
   }, [runs])
-
-  const carName = (id) =>
-    mockCars.find((item) => item.id === Number(id))?.name ?? `Car ${id}`
-
-  const driverName = (id) =>
-    mockDrivers.find((item) => item.id === Number(id))?.name ?? `Driver ${id}`
-
-  const locationName = (id) =>
-    mockLocations.find((item) => item.id === Number(id))?.name ?? `Location ${id}`
 
   const formatDate = (date) => {
     if (!date) return '-'
@@ -72,9 +62,9 @@ function RecentRuns({ runs = [], onRunClick }) {
                 >
                   <td>#{run.run_id}</td>
                   <td>{formatDate(run.started_at)}</td>
-                  <td>{carName(run.car_id)}</td>
-                  <td>{driverName(run.driver_id)}</td>
-                  <td>{locationName(run.location_id)}</td>
+                  <td>{run.carName}</td>
+                  <td>{run.driverName}</td>
+                  <td>{run.locationName}</td>
                 </tr>
               ))}
             </tbody>
