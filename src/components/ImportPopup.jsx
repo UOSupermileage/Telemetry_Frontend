@@ -178,22 +178,11 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
         }
         setError('')
         const run = {
+            ...form,
             name: form.name.trim(),
             car_id: Number(form.car_id),
             driver_id: Number(form.driver_id),
             location_id: Number(form.location_id),
-<<<<<<< HEAD
-            started_at: form.started_at,
-            ended_at: form.ended_at || null,
-            notes: form.notes || null,
-        }
-
-        if (mode === 'edit') {
-            run.run_id = initialRun.run_id
-        }
-        if (onImport) onImport(run)
-        else onClose()
-=======
             started_at: new Date(form.started_at).toISOString(),
             ended_at: form.ended_at ? new Date(form.ended_at).toISOString() : null,
         }
@@ -211,7 +200,6 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
         } finally {
             setIsSubmitting(false)
         }
->>>>>>> origin/cleaning
     }
 
     return (<div className={page ? 'edit-run-page' : 'import-overlay'} onClick={page ? undefined : requestClose}>
