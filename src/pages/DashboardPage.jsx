@@ -52,24 +52,23 @@ function DashboardPage({ onNavigate }) {
       </section>
 
       <div className="welcome-actions">
-        <button
-          className="welcome-card"
-          type="button"
-          onClick={() => onNavigate('runs')}
-        >
-          <span className="welcome-card-icon" aria-hidden="true">↻</span>
-          <span className="welcome-card-copy">
-            <strong>Browse runs</strong>
-            <span>Review test sessions and import a new run.</span>
-          </span>
-          <span className="welcome-arrow" aria-hidden="true">→</span>
-        </button>
+        <section className="welcome-card welcome-card-recent-runs">
+          {loading ? (
+          <p>Loading recent runs...</p>
+          ) : error ? (
+          <p role="alert">Could not load recent runs: {error}</p>
+          ) : runs.length === 0 ? (
+          <p>No runs found. Import a run to get started.</p>
+          ) : (
+          <RecentRuns runs={runs} />
+          )}
+        </section>
 
         <button
           className="welcome-card"
           type="button"
           onClick={() => onNavigate('analysis')}
-        >
+        >   
           <span className="welcome-card-icon" aria-hidden="true">◎</span>
           <span className="welcome-card-copy">
             <strong>Explore analysis</strong>
@@ -78,20 +77,6 @@ function DashboardPage({ onNavigate }) {
           <span className="welcome-arrow" aria-hidden="true">→</span>
         </button>
       </div>
-
-      <section className="recent-runs-section">
-        <h2>Recent runs</h2>
-
-        {loading ? (
-          <p>Loading recent runs...</p>
-        ) : error ? (
-          <p role="alert">Could not load recent runs: {error}</p>
-        ) : runs.length === 0 ? (
-          <p>No runs found. Import a run to get started.</p>
-        ) : (
-          <RecentRuns runs={runs} />
-        )}
-      </section>
     </div>
   )
 }
