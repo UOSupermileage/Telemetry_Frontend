@@ -83,7 +83,7 @@ function RunsPage({
       setDeletingRunId(null)
     }
   }
-}
+
   const deleteSelectedRun = () => deleteRun(selectedRun)
 
   // Send the edited fields to the backend, then update the visible row with its response.
@@ -212,5 +212,4 @@ function RunsPage({
     </>
   )
 }
-
 export default RunsPage
