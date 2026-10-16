@@ -1,51 +1,43 @@
+import { useEffect, useState } from 'react'
 import RecentRuns from '../components/RecentRuns'
+import { getRecentRuns } from '../services/runs'
 
-const testRuns = [
-  {
-    run_id: 1,
-    car_id: 2,
-    driver_id: 3,
-    location_id: 1,
-    started_at: '2026-09-20T14:00:00',
-  },
-  {
-    run_id: 2,
-    car_id: 1,
-    driver_id: 4,
-    location_id: 2,
-    started_at: '2026-09-21T10:30:00',
-  },
-  {
-    run_id: 3,
-    car_id: 2,
-    driver_id: 3,
-    location_id: 1,
-    started_at: '2026-09-22T13:00:00',
-  },
-  {
-    run_id: 4,
-    car_id: 1,
-    driver_id: 4,
-    location_id: 2,
-    started_at: '2026-09-25T09:00:00',
-  },
-  {
-    run_id: 5,
-    car_id: 2,
-    driver_id: 3,
-    location_id: 1,
-    started_at: '2026-09-28T15:00:00',
-  },
-  {
-    run_id: 6,
-    car_id: 1,
-    driver_id: 4,
-    location_id: 2,
-    started_at: '2026-09-29T11:00:00',
-  },
-]
+function DashboardPage({ onNavigate }) {
+  const [runs, setRuns] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-function DashboardPage() {
+  useEffect(() => {
+    let cancelled = false
+
+    async function fetchRecentRuns() {
+      try {
+        setLoading(true)
+        setError('')
+
+        const data = await getRecentRuns()
+        console.log('Fetched recent runs:', data)
+        if (!cancelled) {
+          setRuns(data)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err.message || 'Failed to load recent runs.')
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchRecentRuns()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   return (
     <div className="welcome-page">
       <section className="welcome-banner">
@@ -60,26 +52,31 @@ function DashboardPage() {
       </section>
 
       <div className="welcome-actions">
-        <a className="welcome-card" href="#runs">
-          <span className="welcome-card-icon" aria-hidden="true">↻</span>
-          <span className="welcome-card-copy">
-            <strong>Browse runs</strong>
-            <span>Review test sessions and import a new run.</span>
-          </span>
-          <span className="welcome-arrow" aria-hidden="true">→</span>
-        </a>
+        <section className="welcome-card welcome-card-recent-runs">
+          {loading ? (
+          <p>Loading recent runs...</p>
+          ) : error ? (
+          <p role="alert">Could not load recent runs: {error}</p>
+          ) : runs.length === 0 ? (
+          <p>No runs found. Import a run to get started.</p>
+          ) : (
+          <RecentRuns runs={runs} />
+          )}
+        </section>
 
-        <a className="welcome-card" href="#analysis">
+        <button
+          className="welcome-card"
+          type="button"
+          onClick={() => onNavigate('analysis')}
+        >   
           <span className="welcome-card-icon" aria-hidden="true">◎</span>
           <span className="welcome-card-copy">
             <strong>Explore analysis</strong>
             <span>View telemetry graphs and compare key metrics.</span>
           </span>
           <span className="welcome-arrow" aria-hidden="true">→</span>
-        </a>
+        </button>
       </div>
-
-      <RecentRuns runs={testRuns} />
     </div>
   )
 }

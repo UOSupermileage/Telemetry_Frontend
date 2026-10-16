@@ -27,7 +27,6 @@ export async function getRecentRuns() {
 }
 
 /** Fetch a single run record from the backend. @param {string|number} runId */
-export async function getRun(runId, { signal } = {}) {
  export async function getRun(runId, { signal } = {}) {
   return apiFetch(`/runs/${encodeURIComponent(runId)}`, { signal })
 }
@@ -278,4 +277,4 @@ export async function importTelemetry(run, { signal } = {}) {
     signal,
   })
 }
-}
+
