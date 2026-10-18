@@ -1,5 +1,4 @@
 import {useCallback, useEffect, useRef, useState} from 'react'
-import {mockCars, mockDrivers, mockLocations} from '../data/mockData'
 import './ImportPopup.css'
 
 function previewCsv(text) {
@@ -262,9 +261,11 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
                             >
                                 <option value="">Select a car</option>
 
-                                {(editorOptions?.cars ?? mockCars).map((car) => (<option key={car.id} value={car.id}>
+                                {(editorOptions?.cars ?? []).map((car) => (
+                                <option key={car.id} value={car.id}>
                                     {car.name}
-                                </option>))}
+                                </option>
+                                ))}
                             </select>
                         </div>
 
@@ -281,12 +282,11 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
                             >
                                 <option value="">Select a driver</option>
 
-                                {(editorOptions?.drivers ?? mockDrivers).map((driver) => (<option
-                                    key={driver.id}
-                                    value={driver.id}
-                                >
+                                {(editorOptions?.drivers ?? []).map((driver) => (
+                                <option key={driver.id} value={driver.id}>
                                     {driver.name}
-                                </option>))}
+                                </option>
+                                ))}
                             </select>
                         </div>
 
@@ -303,12 +303,11 @@ export default function ImportPopup({onClose, onImport, initialRun, mode = 'impo
                             >
                                 <option value="">Select a location</option>
 
-                                {(editorOptions?.locations ?? mockLocations).map((location) => (<option
-                                    key={location.id}
-                                    value={location.id}
-                                >
-                                    {location.name}
-                                </option>))}
+                                {(editorOptions?.locations ?? []).map((location) => (
+                                    <option key={location.id} value={location.id}>
+                                        {location.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 
