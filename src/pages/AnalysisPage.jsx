@@ -2,7 +2,12 @@
 import TelemetryChartHolder from '../components/TelemetryChartHolder'
 import DashboardSidebar from '../components/DashboardSidebar'
 import RunSelector from '../components/RunSelector'
-import { exportTelemetry, getAllRuns, getAllTelemetryData, getRun, getRunAnalytics } from '../services/runs'
+import {
+  exportTelemetry,
+  getAllRuns,
+  getAllTelemetryData,
+  getRunAnalytics,
+} from '../services/runs'
 import './AnalysisPage.css'
 
 const metricDefinitions = [
@@ -107,40 +112,101 @@ function AnalysisPage({ selectedRunId: requestedRunId = '', requestedCompareRunI
     : latestRunId(runs)
   const effectiveCompareRunId = runs.some((run) => String(run.run_id) === String(compareRunId)
     && String(run.run_id) !== String(effectiveRunId)) ? compareRunId : ''
-  const primaryRun = analysisByRun[String(effectiveRunId)]?.run
-    ?? runs.find((run) => String(run.run_id) === String(effectiveRunId))
-  const compareRun = analysisByRun[String(effectiveCompareRunId)]?.run
-    ?? runs.find((run) => String(run.run_id) === String(effectiveCompareRunId))
+  const primaryRun = runs.find(
+    (run) => String(run.run_id) === String(effectiveRunId)
+  )
+
+  const compareRun = runs.find(
+    (run) => String(run.run_id) === String(effectiveCompareRunId)
+  )
+
   const primaryAnalysis = analysisByRun[String(effectiveRunId)]
   const compareAnalysis = analysisByRun[String(effectiveCompareRunId)]
 
   useEffect(() => {
-    const runIds = [...new Set([effectiveRunId, effectiveCompareRunId].filter(Boolean).map(String))]
-    if (runIds.length === 0) {
-      setAnalysisByRun({})
-      return undefined
+  const runIds = [
+    ...new Set(
+      [effectiveRunId, effectiveCompareRunId]
+        .filter(Boolean)
+        .map(String)
+    ),
+  ]
+
+  if (runIds.length === 0) {
+    setAnalysisByRun({})
+    setIsLoadingAnalysis(false)
+    return undefined
+  }
+
+  const controller = new AbortController()
+
+  setIsLoadingAnalysis(true)
+  setError('')
+
+  async function loadRunAnalysis(runId) {
+    // Telemetry and analytics are separate requests.
+    const [telemetryResult, analyticsResult] = await Promise.allSettled([
+      getAllTelemetryData({
+        runId,
+        fields: telemetryFields,
+        signal: controller.signal,
+      }),
+      getRunAnalytics(runId, {
+        signal: controller.signal,
+      }),
+    ])
+
+    if (telemetryResult.status === 'rejected') {
+      throw new Error(
+        `Could not load telemetry for run ${runId}: ${
+          telemetryResult.reason?.message ?? 'Unknown error'
+        }`
+      )
     }
 
-    const controller = new AbortController()
-    setIsLoadingAnalysis(true)
-    setError('')
-    Promise.all(runIds.map(async (runId) => {
-      const [run, points, analytics] = await Promise.all([
-        getRun(runId, { signal: controller.signal }),
-        getAllTelemetryData({ runId, fields: telemetryFields, signal: controller.signal }),
-        getRunAnalytics(runId, { signal: controller.signal }),
-      ])
-      return [String(runId), { run, points: downsampleTelemetry(points), analytics }]
-    }))
-      .then((entries) => setAnalysisByRun(Object.fromEntries(entries)))
-      .catch((loadError) => {
-        if (loadError.name !== 'AbortError') setError(loadError.message)
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setIsLoadingAnalysis(false)
-      })
-    return () => controller.abort()
-  }, [effectiveRunId, effectiveCompareRunId])
+    return [
+      runId,
+      {
+        points: downsampleTelemetry(telemetryResult.value),
+        analytics:
+          analyticsResult.status === 'fulfilled'
+            ? analyticsResult.value
+            : null,
+        analyticsError:
+          analyticsResult.status === 'rejected'
+            ? analyticsResult.reason?.message ?? 'Unknown error'
+            : '',
+      },
+    ]
+  }
+
+  Promise.all(runIds.map(loadRunAnalysis))
+    .then((entries) => {
+      setAnalysisByRun(Object.fromEntries(entries))
+
+      const analyticsErrors = entries
+        .filter(([, result]) => result.analyticsError)
+        .map(([runId, result]) =>
+          `Run ${runId} analytics: ${result.analyticsError}`
+        )
+
+      if (analyticsErrors.length > 0) {
+        setError(analyticsErrors.join(' | '))
+      }
+    })
+    .catch((loadError) => {
+      if (loadError.name !== 'AbortError') {
+        setError(loadError.message)
+      }
+    })
+    .finally(() => {
+      if (!controller.signal.aborted) {
+        setIsLoadingAnalysis(false)
+      }
+    })
+
+  return () => controller.abort()
+}, [effectiveRunId, effectiveCompareRunId])
 
   const runCharts = useMemo(() => metricDefinitions.map((metric) => ({
     ...metric,

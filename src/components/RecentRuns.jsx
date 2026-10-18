@@ -45,7 +45,7 @@ function RecentRuns({ runs = [], onRunClick }) {
           <table className="recent-runs-table">
             <thead>
               <tr>
-                <th>Run</th>
+                <th>Run ID</th>
                 <th>Date</th>
                 <th>Car</th>
                 <th>Driver</th>
