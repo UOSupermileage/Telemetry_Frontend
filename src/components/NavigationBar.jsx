@@ -1,6 +1,6 @@
 import './NavigationBar.css'
 import uosmLogo from '../assets/UOSMLogo.jpg'
-import { navigationPages } from '../data/mockData'
+import { navigationPages } from '../data/navigationPages'
 
 function NavigationBar({ activePage }) {
   return (

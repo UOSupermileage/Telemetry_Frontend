@@ -5,7 +5,7 @@ import NavigationBar from './components/NavigationBar'
 import DashboardPage from './pages/DashboardPage'
 import AnalysisPage from './pages/AnalysisPage'
 import RunsPage from './pages/RunsPage'
-import { navigationPages } from './data/mockData'
+import { navigationPages } from './data/navigationPages'
 
 const pageContent = {
   dashboard: {
