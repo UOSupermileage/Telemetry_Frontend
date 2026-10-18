@@ -1,3 +1,4 @@
+
 :root {
   color-scheme: light;
   --sidebar-bg: #231f20;
@@ -318,6 +319,8 @@ h1 {
   font-size: 14px;
 }
 
+/* Welcome page styles (retained for other uses) */
+
 .welcome-page {
   display: grid;
   gap: 22px;
@@ -429,6 +432,127 @@ h1 {
   font-size: 20px;
 }
 
+/* Dashboard layout */
+
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 24px;
+  width: 100%;
+  min-width: 0;
+  align-items: start;
+}
+
+.dashboard-sidebar-panel,
+.dashboard-graph-area {
+  min-width: 0;
+}
+
+/* Dashboard overview and recent runs */
+
+.dashboard-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.dashboard-overview {
+  display: block;
+  min-width: 0;
+  padding: 1.5rem;
+}
+
+.dashboard-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.dashboard-section-heading h2 {
+  margin: 0 0 0.4rem;
+  color: var(--heading);
+}
+
+.dashboard-section-heading p {
+  margin: 0;
+  color: var(--body);
+  font-size: 0.9rem;
+}
+
+.dashboard-section-heading .welcome-card-icon {
+  color: var(--sidebar-active);
+  font-size: 1.8rem;
+}
+
+/* Three horizontal statistic cards */
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.dashboard-stat {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+  padding: 1rem;
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+
+.dashboard-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--sidebar-active);
+  font-size: 1.5rem;
+}
+
+.dashboard-stat p {
+  margin: 0 0 0.3rem;
+  color: var(--body);
+  font-size: 0.9rem;
+}
+
+.dashboard-stat strong {
+  font-size: 1.8rem;
+  color: var(--heading);
+}
+
+.dashboard-stat small {
+  display: block;
+  margin-top: 0.25rem;
+  color: #b42318;
+}
+
+/* Full-width recent runs card.
+   RecentRuns retains responsibility for its own list layout. */
+
+.welcome-card-recent-runs {
+  display: block;
+  min-width: 0;
+  padding: 1.5rem;
+}
+
+/* Responsive layouts */
+
+@media (max-width: 850px) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 640px) {
   .runs-heading-actions {
     align-items: stretch;
@@ -464,27 +588,19 @@ h1 {
   .welcome-actions {
     grid-template-columns: 1fr;
   }
+
+  .dashboard-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
-.dashboard-layout {
-  display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
-  gap: 24px;
-  width: 100%;
-  min-width: 0;
-  align-items: start;
-}
-
-.dashboard-sidebar-panel {
-  min-width: 0;
-}
-
-.dashboard-graph-area {
-  min-width: 0;
-}
-
-@media (max-width: 800px) {
-  .dashboard-layout {
+@media (max-width: 480px) {
+  .dashboard-stats {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-overview,
+  .welcome-card-recent-runs {
+    padding: 1rem;
   }
 }

@@ -18,13 +18,31 @@ import { apiFetch } from './apiClient'
  * @property {string} [notes]
  */
 
+
 /**
- * Fetch recent runs for the dashboard.
+ * Fetch the five most recent runs based on when they started,
+ * not their run_id or insertion order.
+ * 
+ * IMPORTANT: This function will pull ALL the runs from the table 
+ * and sort them in memory, which is inefficient for large datasets.
+ * This will eventually need to be looked at and maybe changed to a 
+ * backend endpoint that returns the most recent runs.
  */
 export async function getRecentRuns() {
-  const data = await apiFetch('/runs?limit=6')
-  return Array.isArray(data) ? data : data.runs
+  const runs = await getAllRuns()
+
+  return runs
+    .filter((run) => run.started_at && !Number.isNaN(
+      new Date(run.started_at).getTime()
+    ))
+    .sort(
+      (a, b) =>
+        new Date(b.started_at).getTime() -
+        new Date(a.started_at).getTime()
+    )
+    .slice(0, 5)
 }
+
 
 /** Fetch a single run record from the backend. @param {string|number} runId */
  export async function getRun(runId, { signal } = {}) {
@@ -179,38 +197,28 @@ export async function exportTelemetry(runId, { signal } = {}) {
  * @returns {Promise<{cars: Array<{id: number, name: string}>, drivers: Array<{id: number, name: string}>, locations: Array<{id: number, name: string}>}>}
  */
 export async function getRunEditorOptions({ signal } = {}) {
-  const [cars, drivers, locations] = await Promise.all(
-    ['cars', 'drivers', 'locations'].map(async (resource) => {
-      const records = await apiFetch(`/${resource}`, { signal })
+    const [cars, drivers, locations] = await Promise.all([
+        apiFetch('/cars?limit=500', { signal }),
+        apiFetch('/drivers?limit=500', { signal }),
+        apiFetch('/locations?limit=500', { signal }),
+    ])
 
-      if (!Array.isArray(records)) {
-        throw new Error(
-          `The ${resource} service response must be an array`
-        )
-      }
+    return {
+        cars: cars.map((car) => ({
+            id: car.car_id,
+            name: car.name,
+        })),
 
-      return records
-    })
-  )
+        drivers: drivers.map((driver) => ({
+            id: driver.driver_id,
+            name: `${driver.first_name} ${driver.last_name}`.trim(),
+        })),
 
-  return {
-    cars: cars.map(({ car_id, name }) => ({
-      id: car_id,
-      name,
-    })),
-
-    drivers: drivers.map(
-      ({ driver_id, first_name, last_name, name }) => ({
-        id: driver_id,
-        name: name ?? [first_name, last_name].filter(Boolean).join(' '),
-      })
-    ),
-
-    locations: locations.map(({ location_id, name }) => ({
-      id: location_id,
-      name,
-    })),
-  }
+        locations: locations.map((location) => ({
+            id: location.location_id,
+            name: location.name,
+        })),
+    }
 }
 
 
