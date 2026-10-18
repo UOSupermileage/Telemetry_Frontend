@@ -24,7 +24,11 @@ function RunsPage({
   const [editingRun, setEditingRun] = useState(null)
   const [selectedRunIds, setSelectedRunIds] = useState([])
   const [apiRuns, setApiRuns] = useState([])
-  const [editorOptions, setEditorOptions] = useState(null)
+  const [editorOptions, setEditorOptions] = useState({
+    cars: [],
+    drivers: [],
+    locations: [],
+  })  
   const [loadError, setLoadError] = useState('')
   const [actionError, setActionError] = useState('')
   const [deletingRunId, setDeletingRunId] = useState(null)
@@ -39,9 +43,14 @@ function RunsPage({
       getRunEditorOptions({ signal: controller.signal }),
     ])
       .then(([result, options]) => {
-        // `result` is the validated array returned by the runs service.
-        setApiRuns(attachReferenceIds(result, options))
-        setEditorOptions(options)
+        const safeOptions = {
+          cars: options?.cars ?? [],
+          drivers: options?.drivers ?? [],
+          locations: options?.locations ?? [],
+        } 
+
+        setEditorOptions(safeOptions)
+        setApiRuns(attachReferenceIds(result, safeOptions))
         setIsLoading(false)
       })
       .catch((error) => {
@@ -184,6 +193,9 @@ function RunsPage({
       {/* `runs` hands the backend response to the table, which renders its rows. */}
       <RunsTable
         runs={displayRuns}
+        cars={editorOptions.cars}
+        drivers={editorOptions.drivers}
+        locations={editorOptions.locations}
         emptyMessage={isLoading ? 'Loading runs…' : loadError ? 'Runs are unavailable because the database could not be reached.' : 'No runs found in the database.'}
         onRunSelect={onRunSelect}
         onRunEdit={setEditingRun}
