@@ -4,7 +4,7 @@ import RecentRuns from '../components/RecentRuns'
 import { getRecentRuns } from '../services/runs'
 import { apiFetch } from '../services/apiClient'
 
-function DashboardPage({ onNavigate }) {
+function DashboardPage() {
   const [runs, setRuns] = useState([])
   const [driverCount, setDriverCount] = useState(null)
   const [carCount, setCarCount] = useState(null)

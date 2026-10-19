@@ -51,13 +51,23 @@ function getCompareRunIdFromHash() {
   ).get('compare') || ''
 }
 
+function getSavedTheme() {
+  return window.localStorage.getItem('telemetry-theme') === 'dark'
+}
+
 function App() {
   const [activePage, setActivePage] = useState(getPageFromHash)
   const [selectedRunId, setSelectedRunId] = useState(getRunIdFromHash)
   const [compareRunId, setCompareRunId] = useState(getCompareRunIdFromHash)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [darkMode, setDarkMode] = useState(getSavedTheme)
 
   const profileMenuRef = useRef(null)
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = darkMode ? 'dark' : 'light'
+    window.localStorage.setItem('telemetry-theme', darkMode ? 'dark' : 'light')
+  }, [darkMode])
 
   const openRunAnalysis = (run) => {
     setSelectedRunId(run.run_id)
@@ -177,6 +187,21 @@ function App() {
                 >
                   Account settings
                 </div>
+
+                <div className="profile-menu-divider" />
+
+                <button
+                  className="profile-menu-item theme-toggle"
+                  type="button"
+                  role="menuitemcheckbox"
+                  aria-checked={darkMode}
+                  onClick={() => setDarkMode((enabled) => !enabled)}
+                >
+                  <span>Dark mode</span>
+                  <span className="theme-switch" aria-hidden="true">
+                    <span />
+                  </span>
+                </button>
               </div>
             )}
           </div>

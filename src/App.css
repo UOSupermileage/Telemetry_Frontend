@@ -159,6 +159,55 @@ body {
   font-size: 13px;
 }
 
+.theme-toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  background: var(--surface-muted);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--sidebar-active);
+  outline-offset: 1px;
+}
+
+.theme-switch {
+  display: flex;
+  width: 34px;
+  height: 20px;
+  align-items: center;
+  padding: 2px;
+  border-radius: 999px;
+  background: #c9c5c2;
+  transition: background 150ms ease;
+}
+
+.theme-switch > span {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 20%);
+  transition: transform 150ms ease;
+}
+
+.theme-toggle[aria-checked='true'] .theme-switch {
+  background: var(--sidebar-active);
+}
+
+.theme-toggle[aria-checked='true'] .theme-switch > span {
+  transform: translateX(14px);
+}
+
 .page-content {
   max-width: 1200px;
   margin: 0 auto;
@@ -603,4 +652,152 @@ h1 {
   .welcome-card-recent-runs {
     padding: 1rem;
   }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --content-bg: #181a1c;
+  --card-bg: #222527;
+  --heading: #f2f3f4;
+  --body: #b7bbbe;
+  --border: #3b4043;
+  --surface-muted: #2b2f32;
+  --accent-soft: #3b2b20;
+  --accent-ring: rgb(244 119 0 / 32%);
+}
+
+:root[data-theme='dark'] .management-page {
+  color: var(--heading);
+}
+
+:root[data-theme='dark'] .management-description,
+:root[data-theme='dark'] .management-tab,
+:root[data-theme='dark'] .management-panel-heading p,
+:root[data-theme='dark'] .management-id-cell,
+:root[data-theme='dark'] .management-loading,
+:root[data-theme='dark'] .management-empty-state p {
+  color: var(--body);
+}
+
+:root[data-theme='dark'] .management-refresh-button,
+:root[data-theme='dark'] .management-cancel-button,
+:root[data-theme='dark'] .management-tabs,
+:root[data-theme='dark'] .management-add-form,
+:root[data-theme='dark'] .management-table-card,
+:root[data-theme='dark'] .management-input-group input,
+:root[data-theme='dark'] .management-delete-button {
+  border-color: var(--border);
+  background: var(--card-bg);
+  color: var(--heading);
+}
+
+:root[data-theme='dark'] .management-tab:hover,
+:root[data-theme='dark'] .management-table thead,
+:root[data-theme='dark'] .management-table tbody tr:hover,
+:root[data-theme='dark'] .management-input-group input:disabled {
+  background: var(--surface-muted);
+}
+
+:root[data-theme='dark'] .management-tab.active {
+  border-color: #80502d;
+  background: #3b2b20;
+  color: #ffad69;
+}
+
+:root[data-theme='dark'] .management-tab-count {
+  background: #383c3f;
+  color: var(--body);
+}
+
+:root[data-theme='dark'] .management-tab.active .management-tab-count {
+  background: #55351f;
+  color: #ffbd86;
+}
+
+:root[data-theme='dark'] .management-resource-icon,
+:root[data-theme='dark'] .management-empty-icon {
+  background: #3b2b20;
+}
+
+:root[data-theme='dark'] .management-panel-heading h2,
+:root[data-theme='dark'] .management-name-cell,
+:root[data-theme='dark'] .management-empty-state h3 {
+  color: var(--heading) !important;
+}
+
+:root[data-theme='dark'] .management-input-group label,
+:root[data-theme='dark'] .management-table td {
+  color: var(--body);
+}
+
+:root[data-theme='dark'] .management-table th,
+:root[data-theme='dark'] .management-table td {
+  border-color: var(--border);
+}
+
+:root[data-theme='dark'] .management-delete-button:hover:not(:disabled) {
+  background: #3d2726;
+}
+
+:root[data-theme='dark'] .management-delete-button {
+  color: #ff938b;
+}
+
+:root[data-theme='dark'] .management-input-group input:focus {
+  border-color: var(--sidebar-active);
+}
+
+:root[data-theme='dark'] .run-comparison-panel,
+:root[data-theme='dark'] .comparison-summary-card,
+:root[data-theme='dark'] .export-telemetry-button,
+:root[data-theme='dark'] .run-comparison-controls select,
+:root[data-theme='dark'] .telemetry-section,
+:root[data-theme='dark'] .telemetry-chart-card {
+  border-color: var(--border);
+  background: var(--card-bg);
+}
+
+:root[data-theme='dark'] .run-comparison-controls,
+:root[data-theme='dark'] .comparison-empty,
+:root[data-theme='dark'] .telemetry-tab,
+:root[data-theme='dark'] .telemetry-chart-card,
+  > .telemetry-chart-container:not(.telemetry-chart-modal-content) {
+  background: var(--surface-muted);
+}
+
+:root[data-theme='dark'] .telemetry-tab:hover {
+  background: #34393c;
+}
+
+:root[data-theme='dark'] .telemetry-tab.selected {
+  border-color: #65442d;
+  background: #382a20;
+}
+
+:root[data-theme='dark'] .telemetry-count {
+  border-color: #65442d;
+  background: #382a20;
+  color: #ffc18f;
+}
+
+:root[data-theme='dark'] .telemetry-chart-modal-content {
+  border-color: var(--border);
+  background: var(--card-bg);
+}
+
+:root[data-theme='dark'] .telemetry-chart-modal-content .telemetry-chart-close {
+  border-color: var(--border);
+  background: var(--surface-muted);
+  color: var(--heading);
+}
+
+:root[data-theme='dark'] .comparison-badge,
+:root[data-theme='dark'] .comparison-delta {
+  border-color: #65442d;
+  background: #382a20;
+}
+
+:root[data-theme='dark'] .comparison-delta span,
+:root[data-theme='dark'] .comparison-delta strong {
+  color: #ffc18f;
 }
