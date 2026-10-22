@@ -213,7 +213,10 @@ function App() {
           <p className="page-description">{content.description}</p>
 
           {activePage === 'dashboard' ? (
-            <DashboardPage />
+            <DashboardPage 
+             onRunSelect={openRunAnalysis}
+             onNavigate={setActivePage}
+            />
           ) : activePage === 'runs' ? (
             <RunsPage
               onRunSelect={openRunAnalysis}

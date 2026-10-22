@@ -1,18 +1,19 @@
-
 import { useCallback, useEffect, useState } from 'react'
 import {
   CarFront,
   UserRound,
   MapPin,
+  UsersRound,
   Plus,
   X,
   LoaderCircle,
   RefreshCw,
   Trash2,
+  Pencil,
+  Check,
 } from 'lucide-react'
 
 import { apiFetch } from '../services/apiClient'
-import { getRunEditorOptions } from '../services/runs'
 import './ManagementPage.css'
 
 const resourceTabs = [
@@ -22,6 +23,9 @@ const resourceTabs = [
     singular: 'car',
     icon: CarFront,
     endpoint: '/cars',
+    idField: 'car_id',
+    nameField: 'name',
+    fields: [{ name: 'name', label: 'Car name', required: true }],
   },
   {
     id: 'drivers',
@@ -29,6 +33,12 @@ const resourceTabs = [
     singular: 'driver',
     icon: UserRound,
     endpoint: '/drivers',
+    idField: 'driver_id',
+    nameField: 'full_name',
+    fields: [
+      { name: 'first_name', label: 'First name', required: true },
+      { name: 'last_name', label: 'Last name', required: true },
+    ],
   },
   {
     id: 'locations',
@@ -36,152 +46,175 @@ const resourceTabs = [
     singular: 'location',
     icon: MapPin,
     endpoint: '/locations',
+    idField: 'location_id',
+    nameField: 'name',
+    fields: [
+      { name: 'name', label: 'Location name', required: true },
+      { name: 'address', label: 'Address', required: false },
+    ],
+  },
+  {
+    id: 'teams',
+    label: 'Teams',
+    singular: 'team',
+    icon: UsersRound,
+    endpoint: '/teams',
+    idField: 'team_id',
+    nameField: 'team_name',
+    fields: [{ name: 'team_name', label: 'Team name', required: true }],
   },
 ]
 
-function getResourceLists(options) {
-  return {
-    cars: options?.cars ?? [],
-    drivers: options?.drivers ?? [],
-    locations: options?.locations ?? [],
+const emptyResources = { cars: [], drivers: [], locations: [], teams: [] }
+
+function normalizeResource(tab, record) {
+  const id = record[tab.idField]
+  if (tab.id === 'drivers') {
+    return {
+      ...record,
+      id,
+      full_name: record.full_name ?? [record.first_name, record.last_name].filter(Boolean).join(' '),
+    }
   }
+  return { ...record, id }
+}
+
+function getDisplayName(tab, resource) {
+  return resource[tab.nameField] || resource.name || `#${resource.id}`
+}
+
+function getInitialForm(tab, resource = null) {
+  return Object.fromEntries(tab.fields.map((field) => [field.name, resource?.[field.name] ?? '']))
 }
 
 function ManagementPage() {
   const [activeTab, setActiveTab] = useState('cars')
-  const [resources, setResources] = useState({
-    cars: [],
-    drivers: [],
-    locations: [],
-  })
-
+  const [resources, setResources] = useState(emptyResources)
   const [isLoading, setIsLoading] = useState(true)
   const [isAdding, setIsAdding] = useState(false)
+  const [editingResource, setEditingResource] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
-
-  const [resourceName, setResourceName] = useState('')
+  const [formValues, setFormValues] = useState({})
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
 
-  const activeResource =
-    resourceTabs.find((tab) => tab.id === activeTab) ?? resourceTabs[0]
-
+  const activeResource = resourceTabs.find((tab) => tab.id === activeTab) ?? resourceTabs[0]
   const activeItems = resources[activeTab] ?? []
   const ActiveIcon = activeResource.icon
 
   const loadResources = useCallback(async (signal) => {
     setIsLoading(true)
     setError('')
-
     try {
-      const options = await getRunEditorOptions({ signal })
-
-      if (signal?.aborted) return
-
-      setResources(getResourceLists(options))
+      const entries = await Promise.all(
+        resourceTabs.map(async (tab) => {
+          const records = await apiFetch(tab.endpoint, { signal })
+          if (!Array.isArray(records)) {
+            throw new Error(`The ${tab.label.toLowerCase()} response must be an array.`)
+          }
+          return [tab.id, records.map((record) => normalizeResource(tab, record))]
+        }),
+      )
+      if (!signal?.aborted) setResources(Object.fromEntries(entries))
     } catch (err) {
-      if (signal?.aborted) return
-
-      setError(err.message || 'Could not load resources.')
+      if (!signal?.aborted) setError(err.message || 'Could not load resources.')
     } finally {
-      if (!signal?.aborted) {
-        setIsLoading(false)
-      }
+      if (!signal?.aborted) setIsLoading(false)
     }
   }, [])
 
   useEffect(() => {
     const controller = new AbortController()
-
     loadResources(controller.signal)
-
     return () => controller.abort()
   }, [loadResources])
 
-  const handleAddResource = async (event) => {
+  const resetForm = () => {
+    setIsAdding(false)
+    setEditingResource(null)
+    setFormValues({})
+  }
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId)
+    resetForm()
+    setError('')
+    setSuccessMessage('')
+  }
+
+  const startAdding = () => {
+    setFormValues(getInitialForm(activeResource))
+    setIsAdding(true)
+    setEditingResource(null)
+    setError('')
+    setSuccessMessage('')
+  }
+
+  const startEditing = (resource) => {
+    setFormValues(getInitialForm(activeResource, resource))
+    setEditingResource(resource)
+    setIsAdding(false)
+    setError('')
+    setSuccessMessage('')
+  }
+
+  const handleSaveResource = async (event) => {
     event.preventDefault()
+    const payload = Object.fromEntries(
+      activeResource.fields.map((field) => [
+        field.name,
+        typeof formValues[field.name] === 'string' ? formValues[field.name].trim() : formValues[field.name],
+      ]),
+    )
 
-    const trimmedName = resourceName.trim()
-
-    if (!trimmedName) {
-      setError(`Enter a name for this ${activeResource.singular}.`)
+    const missingField = activeResource.fields.find((field) => field.required && !payload[field.name])
+    if (missingField) {
+      setError(`Enter a value for ${missingField.label.toLowerCase()}.`)
       return
     }
 
     setIsSaving(true)
     setError('')
     setSuccessMessage('')
-
+    const isEditing = Boolean(editingResource)
     try {
-      await apiFetch(activeResource.endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: trimmedName,
-        }),
+      const endpoint = isEditing
+        ? `${activeResource.endpoint}/${encodeURIComponent(editingResource.id)}`
+        : activeResource.endpoint
+      await apiFetch(endpoint, {
+        method: isEditing ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       })
-
-      setResourceName('')
-      setIsAdding(false)
-
+      resetForm()
       setSuccessMessage(
-        `${activeResource.singular[0].toUpperCase()}${activeResource.singular.slice(1)} added successfully.`,
+        `${activeResource.singular[0].toUpperCase()}${activeResource.singular.slice(1)} ${isEditing ? 'updated' : 'added'} successfully.`,
       )
-
       await loadResources()
     } catch (err) {
-      setError(
-        err.message ||
-          `Could not add this ${activeResource.singular}.`,
-      )
+      setError(err.message || `Could not ${isEditing ? 'update' : 'add'} this ${activeResource.singular}.`)
     } finally {
       setIsSaving(false)
     }
   }
 
   const handleDeleteResource = async (resource) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${resource.name}"? This action cannot be undone.`,
-    )
-
-    if (!confirmed) return
+    const displayName = getDisplayName(activeResource, resource)
+    if (!window.confirm(`Are you sure you want to delete "${displayName}"? This action cannot be undone.`)) return
 
     setDeletingId(resource.id)
     setError('')
     setSuccessMessage('')
-
     try {
-      await apiFetch(
-        `${activeResource.endpoint}/${encodeURIComponent(resource.id)}`,
-        {
-          method: 'DELETE',
-        },
-      )
-
-      setSuccessMessage(
-        `${activeResource.singular[0].toUpperCase()}${activeResource.singular.slice(1)} deleted successfully.`,
-      )
-
+      await apiFetch(`${activeResource.endpoint}/${encodeURIComponent(resource.id)}`, { method: 'DELETE' })
+      setSuccessMessage(`${activeResource.singular[0].toUpperCase()}${activeResource.singular.slice(1)} deleted successfully.`)
       await loadResources()
     } catch (err) {
-      setError(
-        err.message ||
-          `Could not delete this ${activeResource.singular}. It may be referenced by existing runs.`,
-      )
+      setError(err.message || `Could not delete this ${activeResource.singular}. It may be referenced by existing runs.`)
     } finally {
       setDeletingId(null)
     }
-  }
-
-  const handleTabChange = (tabId) => {
-    setActiveTab(tabId)
-    setIsAdding(false)
-    setResourceName('')
-    setError('')
-    setSuccessMessage('')
   }
 
   const handleRefresh = async () => {
@@ -194,26 +227,16 @@ function ManagementPage() {
       <div className="management-toolbar">
         <div className="management-toolbar-copy">
           <p className="management-description">
-            Add and manage the cars, drivers, and locations used by your
-            telemetry runs.
+            Add, edit, and manage the cars, drivers, locations, and teams used by your telemetry runs.
           </p>
         </div>
-
         <button
           type="button"
           className="management-refresh-button"
           onClick={handleRefresh}
           disabled={isLoading || isSaving || deletingId !== null}
         >
-          {isLoading ? (
-            <LoaderCircle
-              size={16}
-              className="management-spinner"
-              aria-hidden="true"
-            />
-          ) : (
-            <RefreshCw size={16} aria-hidden="true" />
-          )}
+          {isLoading ? <LoaderCircle size={16} className="management-spinner" aria-hidden="true" /> : <RefreshCw size={16} aria-hidden="true" />}
           <span>Refresh</span>
         </button>
       </div>
@@ -222,7 +245,6 @@ function ManagementPage() {
         {resourceTabs.map((tab) => {
           const Icon = tab.icon
           const isActive = activeTab === tab.id
-
           return (
             <button
               key={tab.id}
@@ -236,9 +258,7 @@ function ManagementPage() {
             >
               <Icon size={18} aria-hidden="true" />
               <span>{tab.label}</span>
-              <span className="management-tab-count">
-                {resources[tab.id].length}
-              </span>
+              <span className="management-tab-count">{resources[tab.id].length}</span>
             </button>
           )
         })}
@@ -252,143 +272,67 @@ function ManagementPage() {
       >
         <div className="management-panel-header">
           <div className="management-panel-heading">
-            <div className="management-resource-icon">
-              <ActiveIcon size={20} aria-hidden="true" />
-            </div>
-
+            <div className="management-resource-icon"><ActiveIcon size={20} aria-hidden="true" /></div>
             <div>
               <h2>{activeResource.label}</h2>
-              <p>
-                {activeItems.length}{' '}
-                {activeItems.length === 1
-                  ? activeResource.singular
-                  : `${activeResource.singular}s`}
-              </p>
+              <p>{activeItems.length} {activeItems.length === 1 ? activeResource.singular : `${activeResource.singular}s`}</p>
             </div>
           </div>
-
-          {!isAdding && (
-            <button
-              type="button"
-              className="management-add-button"
-              onClick={() => {
-                setIsAdding(true)
-                setError('')
-                setSuccessMessage('')
-              }}
-              disabled={isSaving || deletingId !== null}
-            >
+          {!isAdding && !editingResource && (
+            <button type="button" className="management-add-button" onClick={startAdding} disabled={isSaving || deletingId !== null}>
               <Plus size={17} aria-hidden="true" />
               <span>Add {activeResource.singular}</span>
             </button>
           )}
         </div>
 
-        {isAdding && (
-          <form
-            className="management-add-form"
-            onSubmit={handleAddResource}
-          >
-            <div className="management-input-group">
-              <label htmlFor="management-resource-name">
-                {activeResource.singular[0].toUpperCase()}
-                {activeResource.singular.slice(1)} name
-              </label>
-
-              <input
-                id="management-resource-name"
-                type="text"
-                value={resourceName}
-                onChange={(event) => setResourceName(event.target.value)}
-                placeholder={`Enter ${activeResource.singular} name`}
-                maxLength={120}
-                autoFocus
-                required
-                disabled={isSaving}
-              />
-            </div>
-
+        {(isAdding || editingResource) && (
+          <form className="management-add-form" onSubmit={handleSaveResource}>
+            {activeResource.fields.map((field) => (
+              <div className="management-input-group" key={field.name}>
+                <label htmlFor={`management-${activeTab}-${field.name}`}>{field.label}</label>
+                <input
+                  id={`management-${activeTab}-${field.name}`}
+                  type="text"
+                  value={formValues[field.name] ?? ''}
+                  onChange={(event) => setFormValues((current) => ({ ...current, [field.name]: event.target.value }))}
+                  placeholder={`Enter ${field.label.toLowerCase()}`}
+                  maxLength={120}
+                  autoFocus={field === activeResource.fields[0]}
+                  required={field.required}
+                  disabled={isSaving}
+                />
+              </div>
+            ))}
             <div className="management-form-actions">
-              <button
-                type="button"
-                className="management-cancel-button"
-                onClick={() => {
-                  setIsAdding(false)
-                  setResourceName('')
-                  setError('')
-                }}
-                disabled={isSaving}
-              >
-                <X size={16} aria-hidden="true" />
-                Cancel
+              <button type="button" className="management-cancel-button" onClick={resetForm} disabled={isSaving}>
+                <X size={16} aria-hidden="true" /> Cancel
               </button>
-
-              <button
-                type="submit"
-                className="management-add-button"
-                disabled={isSaving || !resourceName.trim()}
-              >
-                {isSaving ? (
-                  <LoaderCircle
-                    size={16}
-                    className="management-spinner"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <Plus size={16} aria-hidden="true" />
-                )}
-                {isSaving ? 'Adding…' : 'Add resource'}
+              <button type="submit" className="management-add-button" disabled={isSaving}>
+                {isSaving ? <LoaderCircle size={16} className="management-spinner" aria-hidden="true" /> : editingResource ? <Check size={16} aria-hidden="true" /> : <Plus size={16} aria-hidden="true" />}
+                {isSaving ? 'Saving…' : editingResource ? 'Save changes' : `Add ${activeResource.singular}`}
               </button>
             </div>
           </form>
         )}
 
-        {error && (
-          <div className="management-alert management-alert-error" role="alert">
-            {error}
-          </div>
-        )}
-
-        {successMessage && (
-          <div
-            className="management-alert management-alert-success"
-            role="status"
-          >
-            {successMessage}
-          </div>
-        )}
+        {error && <div className="management-alert management-alert-error" role="alert">{error}</div>}
+        {successMessage && <div className="management-alert management-alert-success" role="status">{successMessage}</div>}
 
         <div className="management-table-card">
           {isLoading ? (
             <div className="management-loading">
-              <LoaderCircle
-                size={24}
-                className="management-spinner"
-                aria-hidden="true"
-              />
+              <LoaderCircle size={24} className="management-spinner" aria-hidden="true" />
               <span>Loading resources…</span>
             </div>
           ) : activeItems.length === 0 ? (
             <div className="management-empty-state">
-              <div className="management-empty-icon">
-                <ActiveIcon size={25} aria-hidden="true" />
-              </div>
-
+              <div className="management-empty-icon"><ActiveIcon size={25} aria-hidden="true" /></div>
               <h3>No {activeResource.label.toLowerCase()} yet</h3>
-
-              <p>
-                Add your first {activeResource.singular} to make it available
-                when creating or editing runs.
-              </p>
-
-              {!isAdding && (
-                <button
-                  type="button"
-                  className="management-add-button"
-                  onClick={() => setIsAdding(true)}
-                >
-                  <Plus size={17} aria-hidden="true" />
-                  Add {activeResource.singular}
+              <p>Add your first {activeResource.singular} to make it available when creating or editing runs.</p>
+              {!isAdding && !editingResource && (
+                <button type="button" className="management-add-button" onClick={startAdding}>
+                  <Plus size={17} aria-hidden="true" /> Add {activeResource.singular}
                 </button>
               )}
             </div>
@@ -398,50 +342,40 @@ function ManagementPage() {
                 <thead>
                   <tr>
                     <th scope="col">ID</th>
-                    <th scope="col">Name</th>
-                    <th
-                      scope="col"
-                      className="management-actions-heading"
-                    >
-                      Actions
-                    </th>
+                    {activeResource.fields.map((field) => <th scope="col" key={field.name}>{field.label}</th>)}
+                    <th scope="col" className="management-actions-heading">Actions</th>
                   </tr>
                 </thead>
-
                 <tbody>
                   {activeItems.map((resource) => (
                     <tr key={resource.id}>
                       <td className="management-id-cell">{resource.id}</td>
-                      <td className="management-name-cell">
-                        {resource.name}
-                      </td>
+                      {activeResource.fields.map((field) => (
+                        <td className="management-name-cell" key={field.name}>
+                          {field.name === 'full_name' ? resource.full_name : (resource[field.name] || '—')}
+                        </td>
+                      ))}
                       <td className="management-actions-cell">
+                        <button
+                          type="button"
+                          className="management-cancel-button"
+                          onClick={() => startEditing(resource)}
+                          disabled={deletingId !== null || isSaving || isLoading}
+                          aria-label={`Edit ${getDisplayName(activeResource, resource)}`}
+                          title={`Edit ${getDisplayName(activeResource, resource)}`}
+                        >
+                          <Pencil size={16} aria-hidden="true" /> <span>Edit</span>
+                        </button>
                         <button
                           type="button"
                           className="management-delete-button"
                           onClick={() => handleDeleteResource(resource)}
-                          disabled={
-                            deletingId !== null ||
-                            isSaving ||
-                            isLoading
-                          }
-                          aria-label={`Delete ${resource.name}`}
-                          title={`Delete ${resource.name}`}
+                          disabled={deletingId !== null || isSaving || isLoading}
+                          aria-label={`Delete ${getDisplayName(activeResource, resource)}`}
+                          title={`Delete ${getDisplayName(activeResource, resource)}`}
                         >
-                          {deletingId === resource.id ? (
-                            <LoaderCircle
-                              size={16}
-                              className="management-spinner"
-                              aria-hidden="true"
-                            />
-                          ) : (
-                            <Trash2 size={16} aria-hidden="true" />
-                          )}
-                          <span>
-                            {deletingId === resource.id
-                              ? 'Deleting…'
-                              : 'Delete'}
-                          </span>
+                          {deletingId === resource.id ? <LoaderCircle size={16} className="management-spinner" aria-hidden="true" /> : <Trash2 size={16} aria-hidden="true" />}
+                          <span>{deletingId === resource.id ? 'Deleting…' : 'Delete'}</span>
                         </button>
                       </td>
                     </tr>
