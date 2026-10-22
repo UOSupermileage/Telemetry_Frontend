@@ -4,7 +4,7 @@ import RecentRuns from '../components/RecentRuns'
 import { getRecentRuns } from '../services/runs'
 import { apiFetch } from '../services/apiClient'
 
-function DashboardPage() {
+function DashboardPage({ onNavigate, onRunSelect }) {
   const [runs, setRuns] = useState([])
   const [driverCount, setDriverCount] = useState(null)
   const [carCount, setCarCount] = useState(null)
@@ -175,7 +175,11 @@ function DashboardPage() {
         ) : runs.length === 0 ? (
           <p>No runs found. Import a run to get started.</p>
         ) : (
-          <RecentRuns runs={runs} />
+          <RecentRuns
+            runs={runs}
+            onRunClick={onRunSelect}
+            onViewAll={() => onNavigate('runs')}
+          />
         )}
       </section>
     </div>
