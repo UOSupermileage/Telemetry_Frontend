@@ -1,5 +1,4 @@
 /** @type { import('@storybook/react-vite').Preview } */
-import '../src/index.css'
 import '../src/App.css'
 import { mswLoader } from 'msw-storybook-addon/csf3'
 import { mswHandlers } from './msw-handlers'

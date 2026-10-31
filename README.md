@@ -22,7 +22,6 @@ and exports retain their original units. Display conversions live in
 `node --test src/services/telemetryUnits.test.js`.
 
 The Runs and Analysis pages load runs with the backend's offset/limit pagination.
-Analysis requests individual run records with `GET {VITE_API_BASE_URL}/runs/{run_id}`.
 See the `Run` JSDoc type in `src/services/runs.js` for fields used by the UI.
 
 Editing a run sends `PATCH {VITE_API_BASE_URL}/runs/{run_id}` with the editable
