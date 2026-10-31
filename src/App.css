@@ -761,7 +761,7 @@ h1 {
 :root[data-theme='dark'] .comparison-empty,
 :root[data-theme='dark'] .telemetry-tab,
 :root[data-theme='dark'] .telemetry-chart-card,
-  > .telemetry-chart-container:not(.telemetry-chart-modal-content) {
+:root[data-theme='dark'] .telemetry-chart-card > .telemetry-chart-container:not(.telemetry-chart-modal-content) {
   background: var(--surface-muted);
 }
 

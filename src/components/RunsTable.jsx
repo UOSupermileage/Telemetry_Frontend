@@ -1,6 +1,7 @@
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import './RunsTable.css'
+import { ChevronDown, ChevronUp, ChevronsUpDown, Search } from 'lucide-react'
 
 /**
  * Table for filtering, sorting, selecting, and opening run records.
@@ -59,17 +60,17 @@ function RunsTable({
   }, [openMenu])
 
   // Look up real names from the reference data provided by the API.
-  const carName = (id) =>
+  const carName = useCallback((id) =>
     cars.find((car) => String(car.id) === String(id))?.name ??
-    (id == null ? '-' : `Car ${id}`)
+    (id == null ? '-' : `Car ${id}`), [cars])
 
-  const driverName = (id) =>
+  const driverName = useCallback((id) =>
     drivers.find((driver) => String(driver.id) === String(id))?.name ??
-    (id == null ? '-' : `Driver ${id}`)
+    (id == null ? '-' : `Driver ${id}`), [drivers])
 
-  const locationName = (id) =>
+  const locationName = useCallback((id) =>
     locations.find((location) => String(location.id) === String(id))?.name ??
-    (id == null ? '-' : `Location ${id}`)
+    (id == null ? '-' : `Location ${id}`), [locations])
 
   // Filter runs by search text and selected reference IDs.
   const filteredRuns = useMemo(() => {
@@ -106,9 +107,9 @@ function RunsTable({
     })
   }, [
     runs,
-    cars,
-    drivers,
-    locations,
+    carName,
+    driverName,
+    locationName,
     search,
     carFilter,
     driverFilter,
@@ -151,11 +152,8 @@ function RunsTable({
   }
 
   const getSortArrow = (key) => {
-    if (sortConfig.key !== key) return ''
-
-    return sortConfig.direction === 'asc'
-      ? ' (ascending)'
-      : ' (descending)'
+    const Icon = sortConfig.key !== key ? ChevronsUpDown : sortConfig.direction === 'asc' ? ChevronUp : ChevronDown
+    return <Icon size={12} aria-hidden="true" />
   }
 
   const formatDate = (date) => {
@@ -195,14 +193,14 @@ function RunsTable({
           Search runs
         </label>
 
-        <input
+        <div className="runs-search-field"><Search size={14} aria-hidden="true" /><input
           id="runs-search"
           type="text"
           placeholder="Search runs..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="runs-search"
-        />
+        /></div>
 
         <select
           aria-label="Filter by car"
@@ -328,15 +326,15 @@ function RunsTable({
                       />
                     </td>
 
-                    <td>{run.name || run.run_name || `Run #${run.run_id}`}</td>
-                    <td>{run.run_id ?? '-'}</td>
-                    <td>{formatDate(run.started_at)}</td>
-                    <td>{formatDate(run.ended_at)}</td>
+                    <td className="run-name-cell">{run.name || run.run_name || `Run #${run.run_id}`}</td>
+                    <td className="run-id-cell">#{run.run_id ?? '-'}</td>
+                    <td className="run-date-cell">{formatDate(run.started_at)}</td>
+                    <td className="run-date-cell">{formatDate(run.ended_at)}</td>
                     <td>{run.carName || carName(run.car_id)}</td>
                     <td>{run.driverName || driverName(run.driver_id)}</td>
                     <td>{run.locationName || locationName(run.location_id)}</td>
-                    <td>{run.notes || '-'}</td>
-                    <td>{formatDate(run.date_created)}</td>
+                    <td className="run-notes-cell" title={run.notes || ''}>{run.notes || '-'}</td>
+                    <td className="run-date-cell">{formatDate(run.date_created)}</td>
                   </tr>
                 )
               })

@@ -263,6 +263,27 @@
   flex-shrink: 0;
 }
 
+.resource-editor {
+  border-radius: 4px;
+}
+
+.resource-editor .field small {
+  color: var(--body);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.resource-editor-actions {
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.management-actions-cell > button + button {
+  margin-left: 8px;
+}
+
 .management-alert {
   padding: 12px 14px;
   border: 1px solid;
@@ -357,6 +378,21 @@
 .management-actions-cell {
   text-align: right;
   white-space: nowrap;
+}
+
+.management-actions-cell > button {
+  width: 84px;
+  height: 34px;
+  min-height: 34px;
+  gap: 7px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+
+.management-actions-cell > button span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .management-delete-button {
@@ -513,11 +549,14 @@
     font-size: 12px;
   }
 
-  .management-delete-button {
+  .management-actions-cell > button {
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
     padding: 7px;
   }
 
-  .management-delete-button span {
+  .management-actions-cell > button span {
     display: none;
   }
 
