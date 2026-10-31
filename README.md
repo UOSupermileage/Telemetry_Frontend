@@ -1,5 +1,18 @@
 # Backend connection
 
+The Locations tab opens location details when its name is clicked. Indianapolis
+(including Indy/IMS names) displays the saved Shell 2023 track outline. Other
+locations show an empty state. This is a provisional name-based association;
+it does not assert that the 2023 course matches later event layouts.
+
+Track coordinates are checked into `src/data/sem_2023_us.csv` and bundled by
+Vite with the app. Once deployed, all users receive the same data from the web
+host; the app never reads a user's Downloads folder. Updating this built-in
+outline requires a new deployment. For user-managed tracks, a future backend
+should store uploaded files in shared object storage and link each location ID
+to its track file and course year in the database. Browser local storage is not
+shared storage.
+
 Resource add/edit dialogs use the backend's Create/Update field contracts in
 `src/services/resourceForms.js`. Cars accept `name`, `year_created` (integer,
 minimum 1886), and `team_id` selected from all pages of the teams API. Drivers

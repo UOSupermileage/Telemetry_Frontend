@@ -15,6 +15,7 @@ import { apiFetch } from '../services/apiClient'
 import { getResources } from '../services/resources'
 import './ManagementPage.css'
 import ResourceEditor from '../components/ResourceEditor'
+import TrackOutline from '../components/TrackOutline'
 import { normalizeResource, resourceDefinitions, resourceFieldLabel } from '../services/resourceForms'
 
 const resourceIcons = { cars: CarFront, drivers: UserRound, locations: MapPin, teams: UsersRound }
@@ -32,6 +33,7 @@ function ManagementPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isAdding, setIsAdding] = useState(false)
   const [editingResource, setEditingResource] = useState(null)
+  const [selectedLocationId, setSelectedLocationId] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
   const [error, setError] = useState('')
@@ -40,6 +42,9 @@ function ManagementPage() {
   const activeResource = resourceTabs.find((tab) => tab.id === activeTab) ?? resourceTabs[0]
   const activeItems = resources[activeTab] ?? []
   const ActiveIcon = activeResource.icon
+  const selectedLocation = activeTab === 'locations'
+    ? activeItems.find((item) => item.id === selectedLocationId) : null
+  const hasIndianapolisTrack = selectedLocation && /indianapolis|\bindy\b|\bims\b/i.test(selectedLocation.name)
 
   const loadResources = useCallback(async (signal) => {
     setIsLoading(true)
@@ -73,6 +78,7 @@ function ManagementPage() {
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId)
+    setSelectedLocationId(null)
     resetForm()
     setError('')
     setSuccessMessage('')
@@ -214,6 +220,14 @@ function ManagementPage() {
         {error && <div className="management-alert management-alert-error" role="alert">{error}</div>}
         {successMessage && <div className="management-alert management-alert-success" role="status">{successMessage}</div>}
 
+        {selectedLocation && <section id="location-details" className="location-details" aria-label={`${selectedLocation.name} details`}>
+          <div className="location-details-heading"><div><h3>{selectedLocation.name}</h3>
+            <p>{selectedLocation.address || 'No address provided'}</p></div>
+            <button type="button" className="management-cancel-button" onClick={() => setSelectedLocationId(null)}>Close details</button>
+          </div>
+          {hasIndianapolisTrack ? <TrackOutline /> : <p className="location-track-empty">No track outline available for this location.</p>}
+        </section>}
+
         <div className="management-table-card">
           {isLoading ? (
             <div className="management-loading">
@@ -247,7 +261,11 @@ function ManagementPage() {
                       <td className="management-id-cell">{resource.id}</td>
                       {activeResource.fields.map((field) => (
                         <td className="management-name-cell" key={field.name}>
-                          {resourceFieldLabel(field, resource, resources)}
+                          {activeTab === 'locations' && field.name === 'name'
+                            ? <button type="button" className="location-details-link" aria-expanded={selectedLocationId === resource.id}
+                              aria-controls="location-details" onClick={() => setSelectedLocationId((current) => current === resource.id ? null : resource.id)}>
+                              {resourceFieldLabel(field, resource, resources)}
+                            </button> : resourceFieldLabel(field, resource, resources)}
                         </td>
                       ))}
                       <td className="management-actions-cell">

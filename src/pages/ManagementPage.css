@@ -568,3 +568,11 @@
     width: auto;
   }
 }
+.location-details { margin: 16px 0; padding: 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--card-bg); }
+.location-details-heading { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.location-details-heading h3 { margin: 0 0 6px; color: var(--heading); font-size: 16px; }
+.location-details-heading p, .location-track-empty { margin: 0; color: var(--body); font-size: 12px; }
+.location-track-empty { padding-top: 16px; }
+.location-details-link { padding: 4px 0; border: 0; background: transparent; color: var(--heading); font: inherit; text-align: left; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.location-details-link:hover { color: var(--sidebar-active); }
+.location-details-link:focus-visible { outline: 2px solid var(--sidebar-active); outline-offset: 3px; }
