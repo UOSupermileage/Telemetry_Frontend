@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import RunsTable from '../components/RunsTable'
+import { Plus } from 'lucide-react'
+import './RunsPage.css'
 import ImportPopup from '../components/ImportPopup'
 import { createRun, deleteRun as deleteRunRequest, getAllRuns, getRunEditorOptions, importTelemetry, updateRun as updateRunRequest } from '../services/runs'
 
@@ -134,12 +136,18 @@ function RunsPage({
   }
 
   return (
-    <>
-      {isLoading && <p role="status">Loading runs from the database…</p>}
-      {loadError && <p role="alert">Could not connect to the runs service. Check that the backend and database are running. ({loadError})</p>}
-      {actionError && <p role="alert">{actionError}</p>}
+    <div className="runs-page">
+      {isLoading && <p className="runs-message" role="status">Loading runs from the databaseâ€¦</p>}
+      {loadError && <p className="runs-message is-error" role="alert">Could not connect to the runs service. Check that the backend and database are running. ({loadError})</p>}
+      {actionError && <p className="runs-message is-error" role="alert">{actionError}</p>}
 
       <div className="runs-heading-actions">
+        <div className="runs-library-heading"><h2>Run library</h2><span>{isLoading ? 'Loading...' : `${displayRuns.length} sessions`}</span></div>
+        <button type="button" className="add-run-button" onClick={() => setIsImportOpen(true)} disabled={isLoading || !editorOptions}>
+          <Plus size={14} aria-hidden="true" />Add run
+        </button>
+      </div>
+      <div className="runs-selection-toolbar">
         <div className="run-comparison-actions" aria-live="polite">
           <span>{availableRunIds.length} of 2 selected</span>
           <button
@@ -179,15 +187,7 @@ function RunsPage({
           </button>
         </div>
 
-        <button
-          type="button"
-          className="add-run-button"
-          onClick={() => setIsImportOpen(true)}
-          disabled={isLoading || !editorOptions}
-        >
-          <span aria-hidden="true">+</span>
-          Add run
-        </button>
+        <span className="runs-selection-hint">Select up to two runs to compare. Open a row to analyze.</span>
       </div>
 
       {/* `runs` hands the backend response to the table, which renders its rows. */}
@@ -196,7 +196,7 @@ function RunsPage({
         cars={editorOptions.cars}
         drivers={editorOptions.drivers}
         locations={editorOptions.locations}
-        emptyMessage={isLoading ? 'Loading runs…' : loadError ? 'Runs are unavailable because the database could not be reached.' : 'No runs found in the database.'}
+        emptyMessage={isLoading ? 'Loading runsâ€¦' : loadError ? 'Runs are unavailable because the database could not be reached.' : 'No runs found in the database.'}
         onRunSelect={onRunSelect}
         onRunEdit={setEditingRun}
         onRunDelete={deleteRun}
@@ -221,7 +221,7 @@ function RunsPage({
           onImport={addRun}
         />
       )}
-    </>
+    </div>
   )
 }
 export default RunsPage

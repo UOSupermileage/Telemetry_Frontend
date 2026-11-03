@@ -207,10 +207,12 @@ function App() {
           </div>
         </header>
 
-        <section className="page-content">
+        <section className={`page-content${activePage === 'analysis' ? ' analysis-page-content' : activePage === 'runs' ? ' runs-page-content' : ''}`}>
+          {activePage !== 'analysis' && <>
           <p className="eyebrow">{content.eyebrow}</p>
           <h1>{content.title}</h1>
           <p className="page-description">{content.description}</p>
+          </>}
 
           {activePage === 'dashboard' ? (
             <DashboardPage 

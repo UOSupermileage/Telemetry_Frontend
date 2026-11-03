@@ -1,0 +1,21 @@
+.runs-page { min-width: 0; color: var(--heading); font-size: 12px; }
+.runs-page .runs-heading-actions { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; margin: 0; padding: 18px; border: 1px solid var(--border); border-radius: 11px 11px 0 0; background: var(--card-bg); }
+.runs-library-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; }
+.runs-library-heading h2 { margin: 0; font-size: 17px; font-weight: 700; }
+.runs-library-heading > span { color: var(--body); font-size: 12px; }
+.runs-page .add-run-button { min-height: 38px; padding: 9px 13px; gap: 8px; border-radius: 8px; font-size: 13px; }
+.runs-page .add-run-button:disabled { cursor: not-allowed; opacity: .45; }
+.runs-selection-toolbar { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; padding: 12px 18px; border: 1px solid var(--border); border-top: 0; border-bottom: 0; background: var(--card-bg); }
+.runs-page .run-comparison-actions { display: flex; flex-wrap: wrap; gap: 5px; padding: 0; border: 0; border-radius: 0; background: transparent; font-size: 12px; }
+.runs-page .run-comparison-actions > span { margin-right: 8px; font-variant-numeric: tabular-nums; }
+.runs-page .run-comparison-actions button { min-height: 34px; padding: 0 11px; border-radius: 7px; font-size: 12px; font-weight: 600; }
+.runs-page .run-comparison-actions .compare-runs-button:disabled { border-color: var(--border); background: var(--surface-muted); color: var(--body); opacity: .65; }
+.runs-selection-hint { color: var(--body); font-size: 12px; }
+.runs-message { margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--border); border-left: 2px solid var(--sidebar-active); border-radius: 8px; background: var(--card-bg); color: var(--heading); font-size: 13px; }
+.runs-message.is-error { border-left-color: #b42318; }
+:root[data-theme='dark'] .runs-page .delete-selected-run { color: #ff938b; }
+@media (max-width: 700px) {
+  .runs-selection-hint { flex-basis: 100%; }
+  .runs-page .run-comparison-actions { justify-content: flex-start; }
+  .runs-selection-toolbar { padding: 8px 10px; }
+}

@@ -5,86 +5,26 @@ import {
   MapPin,
   UsersRound,
   Plus,
-  X,
   LoaderCircle,
   RefreshCw,
   Trash2,
   Pencil,
-  Check,
 } from 'lucide-react'
 
 import { apiFetch } from '../services/apiClient'
+import { getResources } from '../services/resources'
 import './ManagementPage.css'
+import ResourceEditor from '../components/ResourceEditor'
+import TrackOutline from '../components/TrackOutline'
+import { normalizeResource, resourceDefinitions, resourceFieldLabel } from '../services/resourceForms'
 
-const resourceTabs = [
-  {
-    id: 'cars',
-    label: 'Cars',
-    singular: 'car',
-    icon: CarFront,
-    endpoint: '/cars',
-    idField: 'car_id',
-    nameField: 'name',
-    fields: [{ name: 'name', label: 'Car name', required: true }],
-  },
-  {
-    id: 'drivers',
-    label: 'Drivers',
-    singular: 'driver',
-    icon: UserRound,
-    endpoint: '/drivers',
-    idField: 'driver_id',
-    nameField: 'full_name',
-    fields: [
-      { name: 'first_name', label: 'First name', required: true },
-      { name: 'last_name', label: 'Last name', required: true },
-    ],
-  },
-  {
-    id: 'locations',
-    label: 'Locations',
-    singular: 'location',
-    icon: MapPin,
-    endpoint: '/locations',
-    idField: 'location_id',
-    nameField: 'name',
-    fields: [
-      { name: 'name', label: 'Location name', required: true },
-      { name: 'address', label: 'Address', required: false },
-    ],
-  },
-  {
-    id: 'teams',
-    label: 'Teams',
-    singular: 'team',
-    icon: UsersRound,
-    endpoint: '/teams',
-    idField: 'team_id',
-    nameField: 'team_name',
-    fields: [{ name: 'team_name', label: 'Team name', required: true }],
-  },
-]
+const resourceIcons = { cars: CarFront, drivers: UserRound, locations: MapPin, teams: UsersRound }
+const resourceTabs = resourceDefinitions.map((tab) => ({ ...tab, icon: resourceIcons[tab.id] }))
 
 const emptyResources = { cars: [], drivers: [], locations: [], teams: [] }
 
-function normalizeResource(tab, record) {
-  const id = record[tab.idField]
-  if (tab.id === 'drivers') {
-    return {
-      ...record,
-      id,
-      full_name: record.full_name ?? [record.first_name, record.last_name].filter(Boolean).join(' '),
-    }
-  }
-  return { ...record, id }
-}
-
 function getDisplayName(tab, resource) {
   return resource[tab.nameField] || resource.name || `#${resource.id}`
-}
-
-function getInitialForm(tab, resource = null) {
-  return Object.fromEntries(tab.fields.map((field) => [field.name, resource?.[field.name] ?? '']))
 }
 
 function ManagementPage() {
@@ -93,30 +33,25 @@ function ManagementPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isAdding, setIsAdding] = useState(false)
   const [editingResource, setEditingResource] = useState(null)
+  const [selectedLocationId, setSelectedLocationId] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
-  const [formValues, setFormValues] = useState({})
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
 
   const activeResource = resourceTabs.find((tab) => tab.id === activeTab) ?? resourceTabs[0]
   const activeItems = resources[activeTab] ?? []
   const ActiveIcon = activeResource.icon
+  const selectedLocation = activeTab === 'locations'
+    ? activeItems.find((item) => item.id === selectedLocationId) : null
+  const hasIndianapolisTrack = selectedLocation && /indianapolis|\bindy\b|\bims\b/i.test(selectedLocation.name)
 
   const loadResources = useCallback(async (signal) => {
     setIsLoading(true)
     setError('')
     try {
-      const entries = await Promise.all(
-        resourceTabs.map(async (tab) => {
-          const records = await apiFetch(tab.endpoint, { signal })
-          if (!Array.isArray(records)) {
-            throw new Error(`The ${tab.label.toLowerCase()} response must be an array.`)
-          }
-          return [tab.id, records.map((record) => normalizeResource(tab, record))]
-        }),
-      )
-      if (!signal?.aborted) setResources(Object.fromEntries(entries))
+      const result = await getResources({ signal })
+      if (!signal?.aborted) setResources(result)
     } catch (err) {
       if (!signal?.aborted) setError(err.message || 'Could not load resources.')
     } finally {
@@ -126,25 +61,30 @@ function ManagementPage() {
 
   useEffect(() => {
     const controller = new AbortController()
-    loadResources(controller.signal)
+    getResources({ signal: controller.signal }).then((result) => {
+      if (!controller.signal.aborted) setResources(result)
+    }).catch((loadError) => {
+      if (!controller.signal.aborted) setError(loadError.message || 'Could not load resources.')
+    }).finally(() => {
+      if (!controller.signal.aborted) setIsLoading(false)
+    })
     return () => controller.abort()
-  }, [loadResources])
+  }, [])
 
   const resetForm = () => {
     setIsAdding(false)
     setEditingResource(null)
-    setFormValues({})
   }
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId)
+    setSelectedLocationId(null)
     resetForm()
     setError('')
     setSuccessMessage('')
   }
 
   const startAdding = () => {
-    setFormValues(getInitialForm(activeResource))
     setIsAdding(true)
     setEditingResource(null)
     setError('')
@@ -152,28 +92,13 @@ function ManagementPage() {
   }
 
   const startEditing = (resource) => {
-    setFormValues(getInitialForm(activeResource, resource))
     setEditingResource(resource)
     setIsAdding(false)
     setError('')
     setSuccessMessage('')
   }
 
-  const handleSaveResource = async (event) => {
-    event.preventDefault()
-    const payload = Object.fromEntries(
-      activeResource.fields.map((field) => [
-        field.name,
-        typeof formValues[field.name] === 'string' ? formValues[field.name].trim() : formValues[field.name],
-      ]),
-    )
-
-    const missingField = activeResource.fields.find((field) => field.required && !payload[field.name])
-    if (missingField) {
-      setError(`Enter a value for ${missingField.label.toLowerCase()}.`)
-      return
-    }
-
+  const handleSaveResource = async (payload) => {
     setIsSaving(true)
     setError('')
     setSuccessMessage('')
@@ -182,18 +107,19 @@ function ManagementPage() {
       const endpoint = isEditing
         ? `${activeResource.endpoint}/${encodeURIComponent(editingResource.id)}`
         : activeResource.endpoint
-      await apiFetch(endpoint, {
+      const saved = await apiFetch(endpoint, {
         method: isEditing ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
+      if (saved) setResources((current) => ({ ...current, [activeTab]: isEditing
+        ? current[activeTab].map((item) => item.id === editingResource.id ? normalizeResource(activeResource, { ...item, ...saved }) : item)
+        : [...current[activeTab], normalizeResource(activeResource, saved)] }))
       resetForm()
       setSuccessMessage(
         `${activeResource.singular[0].toUpperCase()}${activeResource.singular.slice(1)} ${isEditing ? 'updated' : 'added'} successfully.`,
       )
       await loadResources()
-    } catch (err) {
-      setError(err.message || `Could not ${isEditing ? 'update' : 'add'} this ${activeResource.singular}.`)
     } finally {
       setIsSaving(false)
     }
@@ -255,6 +181,7 @@ function ManagementPage() {
               aria-controls="management-resource-panel"
               className={`management-tab${isActive ? ' active' : ''}`}
               onClick={() => handleTabChange(tab.id)}
+              disabled={isSaving}
             >
               <Icon size={18} aria-hidden="true" />
               <span>{tab.label}</span>
@@ -279,51 +206,33 @@ function ManagementPage() {
             </div>
           </div>
           {!isAdding && !editingResource && (
-            <button type="button" className="management-add-button" onClick={startAdding} disabled={isSaving || deletingId !== null}>
+            <button type="button" className="management-add-button" onClick={startAdding} disabled={isLoading || isSaving || deletingId !== null}>
               <Plus size={17} aria-hidden="true" />
               <span>Add {activeResource.singular}</span>
             </button>
           )}
         </div>
 
-        {(isAdding || editingResource) && (
-          <form className="management-add-form" onSubmit={handleSaveResource}>
-            {activeResource.fields.map((field) => (
-              <div className="management-input-group" key={field.name}>
-                <label htmlFor={`management-${activeTab}-${field.name}`}>{field.label}</label>
-                <input
-                  id={`management-${activeTab}-${field.name}`}
-                  type="text"
-                  value={formValues[field.name] ?? ''}
-                  onChange={(event) => setFormValues((current) => ({ ...current, [field.name]: event.target.value }))}
-                  placeholder={`Enter ${field.label.toLowerCase()}`}
-                  maxLength={120}
-                  autoFocus={field === activeResource.fields[0]}
-                  required={field.required}
-                  disabled={isSaving}
-                />
-              </div>
-            ))}
-            <div className="management-form-actions">
-              <button type="button" className="management-cancel-button" onClick={resetForm} disabled={isSaving}>
-                <X size={16} aria-hidden="true" /> Cancel
-              </button>
-              <button type="submit" className="management-add-button" disabled={isSaving}>
-                {isSaving ? <LoaderCircle size={16} className="management-spinner" aria-hidden="true" /> : editingResource ? <Check size={16} aria-hidden="true" /> : <Plus size={16} aria-hidden="true" />}
-                {isSaving ? 'Saving…' : editingResource ? 'Save changes' : `Add ${activeResource.singular}`}
-              </button>
-            </div>
-          </form>
-        )}
+        {(isAdding || editingResource) && <ResourceEditor
+          definition={activeResource} resource={editingResource} resources={resources}
+          onSave={handleSaveResource} onClose={resetForm} isSaving={isSaving} />}
 
         {error && <div className="management-alert management-alert-error" role="alert">{error}</div>}
         {successMessage && <div className="management-alert management-alert-success" role="status">{successMessage}</div>}
+
+        {selectedLocation && <section id="location-details" className="location-details" aria-label={`${selectedLocation.name} details`}>
+          <div className="location-details-heading"><div><h3>{selectedLocation.name}</h3>
+            <p>{selectedLocation.address || 'No address provided'}</p></div>
+            <button type="button" className="management-cancel-button" onClick={() => setSelectedLocationId(null)}>Close details</button>
+          </div>
+          {hasIndianapolisTrack ? <TrackOutline /> : <p className="location-track-empty">No track outline available for this location.</p>}
+        </section>}
 
         <div className="management-table-card">
           {isLoading ? (
             <div className="management-loading">
               <LoaderCircle size={24} className="management-spinner" aria-hidden="true" />
-              <span>Loading resources…</span>
+              <span>Loading resources...</span>
             </div>
           ) : activeItems.length === 0 ? (
             <div className="management-empty-state">
@@ -352,7 +261,11 @@ function ManagementPage() {
                       <td className="management-id-cell">{resource.id}</td>
                       {activeResource.fields.map((field) => (
                         <td className="management-name-cell" key={field.name}>
-                          {field.name === 'full_name' ? resource.full_name : (resource[field.name] || '—')}
+                          {activeTab === 'locations' && field.name === 'name'
+                            ? <button type="button" className="location-details-link" aria-expanded={selectedLocationId === resource.id}
+                              aria-controls="location-details" onClick={() => setSelectedLocationId((current) => current === resource.id ? null : resource.id)}>
+                              {resourceFieldLabel(field, resource, resources)}
+                            </button> : resourceFieldLabel(field, resource, resources)}
                         </td>
                       ))}
                       <td className="management-actions-cell">
@@ -375,7 +288,7 @@ function ManagementPage() {
                           title={`Delete ${getDisplayName(activeResource, resource)}`}
                         >
                           {deletingId === resource.id ? <LoaderCircle size={16} className="management-spinner" aria-hidden="true" /> : <Trash2 size={16} aria-hidden="true" />}
-                          <span>{deletingId === resource.id ? 'Deleting…' : 'Delete'}</span>
+                          <span>{deletingId === resource.id ? 'Deleting...' : 'Delete'}</span>
                         </button>
                       </td>
                     </tr>

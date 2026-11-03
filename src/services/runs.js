@@ -44,11 +44,6 @@ export async function getRecentRuns() {
 }
 
 
-/** Fetch a single run record from the backend. @param {string|number} runId */
- export async function getRun(runId, { signal } = {}) {
-  return apiFetch(`/runs/${encodeURIComponent(runId)}`, { signal })
-}
-
 /**
  * Fetch a page of runs. The API uses offset/limit pagination.
  * @param {{offset?: number, limit?: number, signal?: AbortSignal}} [options]
@@ -99,67 +94,6 @@ export async function createRun(run, { signal } = {}) {
     }),
     signal,
   })
-}
-
-/**
- * Fetch a page of telemetry points. `fields` are encoded as repeated query keys,
- * as expected by FastAPI's list query parameter.
- * @param {{runId: string|number, fields?: string[], startTick?: number, endTick?: number, offset?: number, limit?: number, signal?: AbortSignal}} options
- */
-export async function getTelemetryData({
-  runId,
-  fields = ['tick', 'speed'],
-  startTick,
-  endTick,
-  offset = 0,
-  limit = 1000,
-  signal,
-}) {
-  const query = new URLSearchParams({
-    run_id: String(runId),
-    offset: String(offset),
-    limit: String(limit),
-  })
-
-  fields.forEach((field) => query.append('fields', field))
-
-  if (startTick != null) query.set('start_tick', String(startTick))
-  if (endTick != null) query.set('end_tick', String(endTick))
-
-  const data = await apiFetch(`/telemetry/data?${query}`, { signal })
-
-  if (!Array.isArray(data)) {
-    throw new Error('The telemetry service response must be an array')
-  }
-
-  return data
-}
-
-/** Fetch all requested telemetry fields, following offset pagination. */
-export async function getAllTelemetryData({
-  runId,
-  fields = ['tick', 'throttle', 'speed', 'current', 'voltage'],
-  signal,
-}) {
-  const pageSize = 10000
-  const points = []
-  let offset = 0
-  let page
-
-  do {
-    page = await getTelemetryData({
-      runId,
-      fields,
-      offset,
-      limit: pageSize,
-      signal,
-    })
-
-    points.push(...page)
-    offset += page.length
-  } while (page.length === pageSize)
-
-  return points
 }
 
 /** Fetch aggregated performance metrics for one run. */

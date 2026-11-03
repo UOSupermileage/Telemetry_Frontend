@@ -1,11 +1,12 @@
 import TelemetryChart from './TelemetryChart'
+import { toDisplayTelemetry } from '../services/telemetryUnits'
 
 const data = [
-  { run_id: 3, tick: 0, throttle: 12, speed: 0, current: 4.2, voltage: 48.1 },
-  { run_id: 3, tick: 1, throttle: 28, speed: 12, current: 9.8, voltage: 47.8 },
-  { run_id: 3, tick: 2, throttle: 42, speed: 24, current: 15.3, voltage: 47.4 },
-  { run_id: 3, tick: 3, throttle: 38, speed: 31, current: 13.7, voltage: 47.1 },
-]
+  { run_id: 3, tick: 14000, throttle: 120, speed: 0, current: 4200, voltage: 48100 },
+  { run_id: 3, tick: 15000, throttle: 280, speed: 12000, current: 9800, voltage: 47800 },
+  { run_id: 3, tick: 16000, throttle: 420, speed: 24000, current: 15300, voltage: 47400 },
+  { run_id: 3, tick: 17000, throttle: 380, speed: 31000, current: 13700, voltage: 47100 },
+].map(toDisplayTelemetry)
 
 const meta = {
   component: TelemetryChart,
@@ -18,5 +19,9 @@ export default meta
 export const Speed = {}
 
 export const Throttle = { args: { yKey: 'throttle', unit: '%' } }
+
+export const Current = { args: { yKey: 'current', unit: 'A' } }
+
+export const Voltage = { args: { yKey: 'voltage', unit: 'V' } }
 
 export const NoTelemetry = { args: { data: [] } }

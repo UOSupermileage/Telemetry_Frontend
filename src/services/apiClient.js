@@ -22,7 +22,9 @@ export async function apiFetch(path, options = {}) {
       // Keep the status code if the server did not return JSON.
     }
 
-    throw new Error(`API request failed (${response.status})${detail}`)
+    const error = new Error(`API request failed (${response.status})${detail}`)
+    error.status = response.status
+    throw error
   }
 
   if (response.status === 204) {

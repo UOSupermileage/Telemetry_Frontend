@@ -5,6 +5,37 @@
   min-width: 0;
 }
 
+.telemetry-chart-tooltip {
+  position: absolute;
+  z-index: 2;
+  max-width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border, #e4e1df);
+  border-radius: 3px;
+  background: var(--card-bg, #fff);
+  color: var(--heading, #231f20);
+  font: 11px ui-monospace, Consolas, monospace;
+  pointer-events: none;
+}
+
+.telemetry-chart-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.telemetry-chart-controls button {
+  padding: 6px 10px;
+  border: 1px solid var(--border, #e9e5e2);
+  border-radius: 6px;
+  background: var(--surface-muted, #f7f6f5);
+  color: var(--heading, #231f20);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
 .telemetry-chart-clickable {
   cursor: zoom-in;
 }
