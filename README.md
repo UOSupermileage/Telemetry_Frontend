@@ -83,7 +83,95 @@ For local development, copy `.env.example` to `.env.local` and keep
 so the backend must be running on port 8000. This avoids cross-origin browser
 requests. Restart the Vite dev server after changing the environment file.
 
-For deployment, set `VITE_API_BASE_URL` to the deployed backend API base URL
-before building, or configure your web server to proxy `/api` to the backend.
-The Vite development proxy is not part of the production build. If the API uses
-a different origin, the backend must allow the frontend origin through CORS.
+## Production Docker deployment
+
+This React/Vite SPA uses npm and `package-lock.json`. The image installs with
+`npm ci --include=dev` and builds with `npm run build` on Node 24 LTS, then serves
+only `dist/` using Nginx (`nginx -g 'daemon off;'`). There is no Node application
+server or production npm start command; `npm run dev` and `npm run preview` are
+local tools. Docker build inputs are allowlisted in `.dockerignore`; local env
+files, credentials, dependencies and Git history are excluded.
+
+On the Linux VM, install Docker Engine with the Compose plugin, then run from
+this repository:
+
+```sh
+docker compose config --quiet
+docker compose build --pull frontend
+docker compose up -d frontend
+docker compose ps
+docker compose logs --tail=100 -f frontend
+# Ctrl-C exits log following without stopping the frontend.
+docker compose down
+```
+
+The frontend binds **127.0.0.1:8088** on the VM (container port 80). Port 8088
+was unused on the development host; check it on the VM before starting. Open
+`http://127.0.0.1:8088/` on the VM, or use an SSH tunnel to inspect it remotely.
+API data requires the reverse proxy below; the static container deliberately
+returns 404 for `/api` requests. Its health check checks static serving only.
+Routes currently use hashes: `/#runs`, `/#management`, and `/#analysis?run=1`.
+Direct navigation and reload preserve the hash route; Nginx also provides an
+index fallback for SPA paths and returns 404 for missing hashed assets.
+
+No secrets or runtime frontend settings are required. Compose sets the existing
+**VITE_API_BASE_URL=/api at build time**, covering JSON requests, CSV import and
+CSV export. To change it, edit `build.args` and rebuild/recreate the container.
+For a standalone image build: `docker build --build-arg VITE_API_BASE_URL=/api -t telemetry-frontend .`.
+Container environment variables set at startup cannot change the bundled value.
+All `VITE_*` values are public browser code: never put secrets in them.
+Proxy upstream addresses and the Compose host port can change at runtime without
+rebuilding (recreate the container for a port change). No browser API calls use
+hard-coded localhost addresses; Vite's development proxy alone targets localhost.
+There are currently no WebSocket or Server-Sent Events connections.
+
+The VM's host reverse proxy should serve the frontend at `/` and the separate
+backend at `/api/` on the same hostname. Example locations inside an Nginx
+`server` block (replace port 8000 if the backend listens elsewhere):
+
+```nginx
+location = /api {
+    return 308 /api/;
+}
+location /api/ {
+    # Trailing slash strips /api/: /api/runs?limit=100 -> /runs?limit=100.
+    proxy_pass http://127.0.0.1:8000/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    # Accommodate telemetry CSV uploads; adjust to the club's upload policy.
+    client_max_body_size 100m;
+}
+location / {
+    proxy_pass http://127.0.0.1:8088;
+    proxy_set_header Host $host;
+}
+```
+
+Preserve methods, request bodies and query parameters. Backend paths remain
+`/runs`, `/cars`, `/drivers`, `/locations`, `/teams`, `/telemetry/*`, and
+`/analytics/*`; do not add `/api` to the backend itself. The Vite development
+proxy does not ship in production. Same-origin routing avoids browser CORS;
+an explicitly configured external API origin needs backend CORS permission.
+Host loopback upstreams assume the reverse proxy runs on the VM host; a proxy
+inside a container needs an explicitly configured network/upstream instead.
+VM setup still needs the separate backend, host proxy routes and HTTPS configured.
+
+Deployment verification in the development environment: Compose config validation,
+the production Vite build, all 16 service tests, and a Chromium smoke test of the
+built assets passed. The browser test used a temporary local HTTP reverse proxy
+and test backend, verified the dashboard and direct `/#runs` reload, and confirmed
+`/api` stripping with query parameters preserved. Docker build/start were attempted
+but the local Docker Linux daemon was unavailable; image dependency installation,
+Nginx configuration/health check, container serving and real backend integration
+still need verification on a Docker-enabled host. After starting there, check:
+
+```sh
+docker compose exec frontend nginx -t
+curl -f http://127.0.0.1:8088/
+docker compose ps
+```
+
+Then open the public hostname's dashboard and `/#runs`, reload, and confirm API
+responses in browser network tools through the configured VM reverse proxy.

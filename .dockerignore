@@ -1,0 +1,18 @@
+# Allow only build inputs; local env files, credentials and tooling stay out.
+*
+!package.json
+!package-lock.json
+!index.html
+!vite.config.js
+!.storybook/
+!.storybook/**
+!src/
+!src/**
+!public/
+!public/**
+!docker/
+!docker/nginx.conf
+**/.env
+**/.env.*
+**/*.pem
+**/*.key
