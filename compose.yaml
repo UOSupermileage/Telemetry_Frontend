@@ -7,3 +7,10 @@ services:
     ports:
       - "127.0.0.1:8088:80"
     restart: unless-stopped
+    networks:
+      - telemetry
+
+networks:
+  telemetry:
+    external: true
+    name: telemetry-shared
