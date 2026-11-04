@@ -97,6 +97,9 @@ this repository:
 
 ```sh
 docker compose config --quiet
+docker network create telemetry-shared
+# If the network already exists, skip network creation.
+# Attach/start the backend on this network as described below first.
 docker compose build --pull frontend
 docker compose up -d frontend
 docker compose ps
@@ -108,8 +111,9 @@ docker compose down
 The frontend binds **127.0.0.1:8088** on the VM (container port 80). Port 8088
 was unused on the development host; check it on the VM before starting. Open
 `http://127.0.0.1:8088/` on the VM, or use an SSH tunnel to inspect it remotely.
-API data requires the reverse proxy below; the static container deliberately
-returns 404 for `/api` requests. Its health check checks static serving only.
+Nginx forwards `/api/` to `backend:8000` over the external `telemetry-shared`
+Docker network, stripping the `/api/` prefix. Its health check checks static
+serving only, not backend availability.
 Routes currently use hashes: `/#runs`, `/#management`, and `/#analysis?run=1`.
 Direct navigation and reload preserve the hash route; Nginx also provides an
 index fallback for SPA paths and returns 404 for missing hashed assets.
@@ -120,36 +124,60 @@ CSV export. To change it, edit `build.args` and rebuild/recreate the container.
 For a standalone image build: `docker build --build-arg VITE_API_BASE_URL=/api -t telemetry-frontend .`.
 Container environment variables set at startup cannot change the bundled value.
 All `VITE_*` values are public browser code: never put secrets in them.
-Proxy upstream addresses and the Compose host port can change at runtime without
-rebuilding (recreate the container for a port change). No browser API calls use
+The backend address is in `docker/nginx.conf`; changing it requires rebuilding.
+Nginx uses Docker DNS to refresh the backend address after container recreation.
+The Compose host port can change without rebuilding (recreate the container).
+No browser API calls use
 hard-coded localhost addresses; Vite's development proxy alone targets localhost.
 There are currently no WebSocket or Server-Sent Events connections.
 
-The VM's host reverse proxy should serve the frontend at `/` and the separate
-backend at `/api/` on the same hostname. Example locations inside an Nginx
-`server` block (replace port 8000 if the backend listens elsewhere):
+### Separate backend Compose project
+
+Create the network once on the Docker host with `docker network create telemetry-shared`.
+The backend Compose file currently lives outside this workspace at
+`C:\PythonProject\Telemetry_Backend\compose.yaml`. Add the following network
+entries to that file, retaining all existing backend settings, including the
+loopback port `127.0.0.1:8000:8000`, and leaving the database and `.env` alone:
+
+```yaml
+services:
+  backend:
+    # Keep existing build, environment, ports, etc.
+    networks:
+      default: {}
+      telemetry:
+        aliases:
+          - backend
+
+networks:
+  telemetry:
+    external: true
+    name: telemetry-shared
+```
+
+From the backend project directory, run `docker compose up -d --no-deps backend`.
+On Linux, use the actual backend checkout directory. This keeps the backend's
+default network and adds the shared network without touching database services.
+For the already-running development container, this session attached it with
+`docker network connect --alias backend telemetry-shared telemetry_backend-backend-1`.
+That attachment works now but must be declared in backend Compose to survive
+container recreation. Only one backend should advertise that alias on this network.
+
+### Optional host reverse proxy
+
+The VM host reverse proxy can forward **all** dashboard and API requests to
+the frontend Nginx without rewriting `/api`. Inside its HTTPS `server` block:
 
 ```nginx
-location = /api {
-    return 308 /api/;
-}
-location /api/ {
-    # Trailing slash strips /api/: /api/runs?limit=100 -> /runs?limit=100.
-    proxy_pass http://127.0.0.1:8000/;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    # Accommodate telemetry CSV uploads; adjust to the club's upload policy.
-    client_max_body_size 100m;
-}
 location / {
     proxy_pass http://127.0.0.1:8088;
     proxy_set_header Host $host;
+    client_max_body_size 100m;
 }
 ```
 
-Preserve methods, request bodies and query parameters. Backend paths remain
+Frontend Nginx preserves methods, request bodies and query parameters; its
+trailing-slash upstream maps `/api/cars` to `/cars`. Backend paths remain
 `/runs`, `/cars`, `/drivers`, `/locations`, `/teams`, `/telemetry/*`, and
 `/analytics/*`; do not add `/api` to the backend itself. The Vite development
 proxy does not ship in production. Same-origin routing avoids browser CORS;
@@ -158,18 +186,12 @@ Host loopback upstreams assume the reverse proxy runs on the VM host; a proxy
 inside a container needs an explicitly configured network/upstream instead.
 VM setup still needs the separate backend, host proxy routes and HTTPS configured.
 
-Deployment verification in the development environment: Compose config validation,
-the production Vite build, all 16 service tests, and a Chromium smoke test of the
-built assets passed. The browser test used a temporary local HTTP reverse proxy
-and test backend, verified the dashboard and direct `/#runs` reload, and confirmed
-`/api` stripping with query parameters preserved. Docker build/start were attempted
-but the local Docker Linux daemon was unavailable; image dependency installation,
-Nginx configuration/health check, container serving and real backend integration
-still need verification on a Docker-enabled host. After starting there, check:
+After starting, check the static server and API proxy:
 
 ```sh
 docker compose exec frontend nginx -t
 curl -f http://127.0.0.1:8088/
+curl -f http://127.0.0.1:8088/api/cars
 docker compose ps
 ```
 
