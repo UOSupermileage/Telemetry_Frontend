@@ -6,6 +6,7 @@ import DashboardPage from './pages/DashboardPage'
 import AnalysisPage from './pages/AnalysisPage'
 import RunsPage from './pages/RunsPage'
 import ManagementPage from './pages/ManagementPage'
+import ComponentLabPage from './pages/ComponentLabPage'
 import { navigationPages } from './data/navigationPages'
 
 const pageContent = {
@@ -23,6 +24,11 @@ const pageContent = {
     eyebrow: 'Insights',
     title: 'Analysis',
     description: 'Compare telemetry data and identify trends.',
+  },
+  componentLab: {
+    eyebrow: 'Experimental',
+    title: 'Component Lab',
+    description: 'Explore reusable visuals and correlations with archived sensor samples.',
   },
   management: {
     eyebrow: 'Administration',
@@ -229,6 +235,8 @@ function App() {
               selectedRunId={selectedRunId}
               requestedCompareRunId={compareRunId}
             />
+          ) : activePage === 'componentLab' ? (
+            <ComponentLabPage />
           ) : activePage === 'management' ? (
             <ManagementPage />
           ) : (
