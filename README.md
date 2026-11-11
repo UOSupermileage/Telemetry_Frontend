@@ -197,3 +197,10 @@ docker compose ps
 
 Then open the public hostname's dashboard and `/#runs`, reload, and confirm API
 responses in browser network tools through the configured VM reverse proxy.
+
+## Experimental Component Lab
+
+Component Lab (`/#componentLab`) is a read-only workspace for investigating XY
+relationships in archived samples or existing FastAPI runs. It is separate from
+the production Analysis page. See the [Component Lab guide](docs/component-lab.md)
+for controls, correlations, data provenance, limitations, and testing.
